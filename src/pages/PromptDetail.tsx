@@ -13,7 +13,8 @@ import {
   MessageSquare, 
   Share, 
   Bookmark,
-  BookmarkPlus
+  BookmarkPlus,
+  LogIn
 } from "lucide-react";
 import CommentSection from "@/components/CommentSection";
 import { Textarea } from "@/components/ui/textarea";
@@ -246,35 +247,6 @@ const PromptDetail = () => {
                 </CardContent>
               </Card>
               
-              {/* Comments section */}
-              {showComments && (
-                <div className="mb-8">
-                  <h3 className="text-xl font-semibold mb-4">Comments</h3>
-                  
-                  <div className="mb-4">
-                    <Textarea 
-                      placeholder="Add a comment..." 
-                      value={newComment}
-                      onChange={(e) => setNewComment(e.target.value)}
-                      className="mb-2"
-                      disabled={!isLoggedIn}
-                    />
-                    <div className="flex justify-end">
-                      <Button 
-                        onClick={handleCommentSubmit}
-                        disabled={!newComment.trim()}
-                      >
-                        Comment
-                      </Button>
-                    </div>
-                  </div>
-                  
-                  <ScrollArea className="h-[300px]">
-                    <CommentSection promptId={prompt.id} />
-                  </ScrollArea>
-                </div>
-              )}
-
               <div className="mb-8">
                 <h3 className="text-xl font-semibold mb-4">How to use this prompt</h3>
                 <div className="space-y-4">
@@ -299,6 +271,51 @@ const PromptDetail = () => {
                     </p>
                   </div>
                 </div>
+              </div>
+              
+              {/* Comments section - now positioned after "How to use this prompt" */}
+              <div className="mb-8 relative">
+                <h3 className="text-xl font-semibold mb-4">Comments</h3>
+                
+                <div className={`${!isLoggedIn ? 'opacity-50' : ''}`}>
+                  <div className="mb-4">
+                    <Textarea 
+                      placeholder="Add a comment..." 
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      className="mb-2"
+                      disabled={!isLoggedIn}
+                    />
+                    <div className="flex justify-end">
+                      <Button 
+                        onClick={handleCommentSubmit}
+                        disabled={!newComment.trim() || !isLoggedIn}
+                      >
+                        Comment
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  <ScrollArea className="h-[300px]">
+                    <CommentSection promptId={prompt.id} />
+                  </ScrollArea>
+                </div>
+                
+                {/* Overlay for non-logged-in users */}
+                {!isLoggedIn && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm rounded-md">
+                    <div className="text-center p-6 max-w-md">
+                      <LogIn className="h-10 w-10 mx-auto mb-4 text-primary" />
+                      <h4 className="text-lg font-medium mb-2">Sign in to join the conversation</h4>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        You need to be signed in to comment on prompts and engage with the community.
+                      </p>
+                      <Button asChild>
+                        <Link to="/login">Sign In</Link>
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
