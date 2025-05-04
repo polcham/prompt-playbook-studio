@@ -1,10 +1,11 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import PromptCard from "@/components/PromptCard";
 import CategorySidebar from "@/components/CategorySidebar";
+import TagFilter from "@/components/TagFilter";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Prompt, getPromptsByCategory, getPromptsByTool, samplePrompts } from "@/data/prompts";
@@ -18,11 +19,21 @@ const Library = () => {
   const [selectedCategory, setSelectedCategory] = useState(categoryParam);
   const [selectedTool, setSelectedTool] = useState(toolParam);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [filteredPrompts, setFilteredPrompts] = useState<Prompt[]>([]);
+
+  // Extract all unique tags from prompts
+  const allTags = useMemo(() => {
+    const tagSet = new Set<string>();
+    samplePrompts.forEach(prompt => {
+      prompt.tags.forEach(tag => tagSet.add(tag));
+    });
+    return Array.from(tagSet).sort();
+  }, []);
 
   useEffect(() => {
     filterPrompts();
-  }, [selectedCategory, selectedTool, searchQuery]);
+  }, [selectedCategory, selectedTool, searchQuery, selectedTags]);
 
   const filterPrompts = () => {
     let filtered = [...samplePrompts];
@@ -33,6 +44,12 @@ const Library = () => {
 
     if (selectedTool !== "all") {
       filtered = filtered.filter((prompt) => prompt.tool === selectedTool);
+    }
+
+    if (selectedTags.length > 0) {
+      filtered = filtered.filter((prompt) => 
+        selectedTags.some(tag => prompt.tags.includes(tag))
+      );
     }
 
     if (searchQuery.trim() !== "") {
@@ -56,6 +73,20 @@ const Library = () => {
     setSelectedTool(tool);
   };
 
+  const handleTagSelect = (tag: string) => {
+    setSelectedTags(prev => {
+      if (prev.includes(tag)) {
+        return prev.filter(t => t !== tag);
+      } else {
+        return [...prev, tag];
+      }
+    });
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
+
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
@@ -75,7 +106,7 @@ const Library = () => {
                 placeholder="Search prompts..."
                 className="max-w-md"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={handleSearchChange}
               />
               <Button variant="outline">Search</Button>
             </div>
@@ -89,6 +120,14 @@ const Library = () => {
                 onCategoryChange={handleCategoryChange}
                 onToolChange={handleToolChange}
               />
+              
+              <div className="mt-8">
+                <TagFilter 
+                  tags={allTags}
+                  selectedTags={selectedTags}
+                  onTagSelect={handleTagSelect}
+                />
+              </div>
             </div>
             <div className="lg:col-span-3">
               {filteredPrompts.length > 0 ? (

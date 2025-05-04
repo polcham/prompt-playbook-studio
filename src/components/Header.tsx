@@ -2,10 +2,12 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { Search } from "lucide-react";
+import { Search, Moon, Sun } from "lucide-react";
+import { useDarkMode } from '@/contexts/DarkModeContext';
 
 const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { isDarkMode, toggleDarkMode } = useDarkMode();
 
   return (
     <header className="border-b py-4">
@@ -33,6 +35,14 @@ const Header = () => {
         </nav>
 
         <div className="hidden md:flex items-center gap-4">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={toggleDarkMode}
+            aria-label="Toggle dark mode"
+          >
+            {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </Button>
           <Button variant="outline" size="sm" className="gap-2">
             <Search className="h-4 w-4" />
             <span>Search</span>
@@ -78,7 +88,17 @@ const Header = () => {
             >
               Submit a Prompt
             </Link>
-            <div className="pt-4 border-t mt-2">
+            <div className="flex items-center gap-4 pt-4 border-t mt-2">
+              <Button 
+                variant="outline" 
+                size="icon" 
+                onClick={toggleDarkMode}
+                aria-label="Toggle dark mode"
+              >
+                {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              </Button>
+            </div>
+            <div>
               <Button className="w-full mb-3">Sign Up</Button>
               <Button variant="outline" className="w-full gap-2">
                 <Search className="h-4 w-4" />
