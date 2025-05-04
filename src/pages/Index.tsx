@@ -38,47 +38,6 @@ const Index = () => {
           </div>
         </section>
 
-        {/* Featured Categories */}
-        <section className="py-16 bg-muted/50 px-4">
-          <div className="container mx-auto">
-            <h2 className="text-2xl md:text-3xl font-bold mb-10 text-center">
-              Templates for every creative need
-            </h2>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              <Link to="/library?category=writing" className="group">
-                <div className="bg-white p-8 rounded-xl border shadow-sm transition-all duration-300 group-hover:shadow-md group-hover:-translate-y-1">
-                  <div className="bg-brand-light-purple p-3 rounded-lg w-12 h-12 flex items-center justify-center mb-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-brand-purple"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path></svg>
-                  </div>
-                  <h3 className="text-lg font-medium mb-2">For Writers</h3>
-                  <p className="text-muted-foreground text-sm">Blog outlines, story concepts, creative writing prompts</p>
-                </div>
-              </Link>
-
-              <Link to="/library?category=design" className="group">
-                <div className="bg-white p-8 rounded-xl border shadow-sm transition-all duration-300 group-hover:shadow-md group-hover:-translate-y-1">
-                  <div className="bg-brand-light-teal p-3 rounded-lg w-12 h-12 flex items-center justify-center mb-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-brand-teal"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="2"></circle><path d="M12 19c-4.2 0-7-1.67-7-5 0-1.62.76-3.1 2-4.1"></path><path d="M12 19c4.2 0 7-1.67 7-5 0-1.62-.76-3.1-2-4.1"></path><path d="M12 5v.2"></path><path d="M10 8.12A6 6 0 0 1 12 5"></path><path d="M14 8.12A6 6 0 0 0 12 5"></path></svg>
-                  </div>
-                  <h3 className="text-lg font-medium mb-2">For Designers</h3>
-                  <p className="text-muted-foreground text-sm">Image generation, creative concepts, design variations</p>
-                </div>
-              </Link>
-
-              <Link to="/library?category=coding" className="group">
-                <div className="bg-white p-8 rounded-xl border shadow-sm transition-all duration-300 group-hover:shadow-md group-hover:-translate-y-1">
-                  <div className="bg-brand-light-orange p-3 rounded-lg w-12 h-12 flex items-center justify-center mb-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-brand-orange"><path d="m18 16 4-4-4-4"></path><path d="m6 8-4 4 4 4"></path><path d="m14.5 4-5 16"></path></svg>
-                  </div>
-                  <h3 className="text-lg font-medium mb-2">For Developers</h3>
-                  <p className="text-muted-foreground text-sm">Code snippets, debugging help, algorithm optimization</p>
-                </div>
-              </Link>
-            </div>
-          </div>
-        </section>
-
         {/* Featured Prompts Section */}
         <section className="py-16 px-4">
           <div className="container mx-auto">
