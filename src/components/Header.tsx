@@ -2,12 +2,15 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { Search, Moon, Sun } from "lucide-react";
+import { Search, Moon, Sun, UserRound, LogIn } from "lucide-react";
 import { useDarkMode } from '@/contexts/DarkModeContext';
 
 const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { isDarkMode, toggleDarkMode } = useDarkMode();
+  
+  // Mock authentication state - in a real app, this would come from your auth provider
+  const isLoggedIn = false;
 
   return (
     <header className="border-b py-4">
@@ -17,7 +20,7 @@ const Header = () => {
             <div className="w-10 h-10 rounded-md bg-gradient-to-r from-brand-purple to-brand-pink flex items-center justify-center">
               <span className="text-white font-bold text-xl">P</span>
             </div>
-            <span className="font-display font-bold text-xl hidden sm:inline-block">PromptPlaybook</span>
+            <span className="font-display font-bold text-xl hidden sm:inline-block">PromptBook</span>
           </Link>
         </div>
 
@@ -47,7 +50,21 @@ const Header = () => {
             <Search className="h-4 w-4" />
             <span>Search</span>
           </Button>
-          <Button size="sm">Sign Up</Button>
+          {isLoggedIn ? (
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/profile">
+                <UserRound className="h-4 w-4 mr-2" />
+                Profile
+              </Link>
+            </Button>
+          ) : (
+            <Button size="sm" asChild>
+              <Link to="/login">
+                <LogIn className="h-4 w-4 mr-2" />
+                Sign In
+              </Link>
+            </Button>
+          )}
         </div>
 
         {/* Mobile menu button */}
@@ -99,7 +116,15 @@ const Header = () => {
               </Button>
             </div>
             <div>
-              <Button className="w-full mb-3">Sign Up</Button>
+              {isLoggedIn ? (
+                <Button className="w-full mb-3" asChild>
+                  <Link to="/profile">Profile</Link>
+                </Button>
+              ) : (
+                <Button className="w-full mb-3" asChild>
+                  <Link to="/login">Sign In</Link>
+                </Button>
+              )}
               <Button variant="outline" className="w-full gap-2">
                 <Search className="h-4 w-4" />
                 <span>Search</span>

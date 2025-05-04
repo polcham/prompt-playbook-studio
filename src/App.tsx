@@ -11,6 +11,8 @@ import Library from "./pages/Library";
 import PromptDetail from "./pages/PromptDetail";
 import Submit from "./pages/Submit";
 import NotFound from "./pages/NotFound";
+import Login from "./pages/Login";
+import Favorites from "./pages/Favorites";
 
 const queryClient = new QueryClient();
 
@@ -26,6 +28,8 @@ const App = () => (
             <Route path="/library" element={<Library />} />
             <Route path="/prompt/:id" element={<PromptDetail />} />
             <Route path="/submit" element={<Submit />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/favorites" element={<Favorites />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

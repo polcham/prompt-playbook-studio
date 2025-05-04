@@ -8,17 +8,45 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { getPromptById, getPromptsByCategory, Prompt } from "@/data/prompts";
 import { toast } from "sonner";
+import { 
+  Heart, 
+  MessageSquare, 
+  Share, 
+  Bookmark,
+  BookmarkPlus
+} from "lucide-react";
+import CommentSection from "@/components/CommentSection";
+import { Textarea } from "@/components/ui/textarea";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import AuthPrompt from "@/components/AuthPrompt";
 
 const PromptDetail = () => {
   const { id } = useParams<{ id: string }>();
   const [prompt, setPrompt] = useState<Prompt | undefined>(undefined);
   const [relatedPrompts, setRelatedPrompts] = useState<Prompt[]>([]);
   const [copied, setCopied] = useState(false);
+  
+  // Mock authentication state - in a real app, this would come from your auth provider
+  const isLoggedIn = false;
+  
+  // State for social features
+  const [isLiked, setIsLiked] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
+  const [commentCount, setCommentCount] = useState(0);
+  const [showComments, setShowComments] = useState(false);
+  const [newComment, setNewComment] = useState("");
+  const [showAuthPrompt, setShowAuthPrompt] = useState(false);
+  const [authAction, setAuthAction] = useState<string>("");
 
   useEffect(() => {
     if (id) {
       const foundPrompt = getPromptById(id);
       setPrompt(foundPrompt);
+      
+      // Set mock counts
+      setLikeCount(Math.floor(Math.random() * 100));
+      setCommentCount(Math.floor(Math.random() * 20));
 
       if (foundPrompt) {
         const related = getPromptsByCategory(foundPrompt.category)
@@ -35,6 +63,64 @@ const PromptDetail = () => {
       setCopied(true);
       toast.success("Copied to clipboard!");
       setTimeout(() => setCopied(false), 2000);
+    }
+  };
+  
+  const handleShare = () => {
+    if (navigator.share && prompt) {
+      navigator.share({
+        title: prompt.title,
+        text: `Check out this ${prompt.tool} prompt: ${prompt.title}`,
+        url: window.location.href,
+      })
+      .then(() => toast.success("Shared successfully!"))
+      .catch((error) => console.log('Error sharing', error));
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+      toast.success("Link copied to clipboard!");
+    }
+  };
+  
+  const handleLike = () => {
+    if (!isLoggedIn) {
+      setAuthAction("like prompts");
+      setShowAuthPrompt(true);
+      return;
+    }
+    
+    setIsLiked(!isLiked);
+    setLikeCount(isLiked ? likeCount - 1 : likeCount + 1);
+    if (!isLiked) {
+      toast.success("Added to liked prompts!");
+    }
+  };
+  
+  const handleFavorite = () => {
+    if (!isLoggedIn) {
+      setAuthAction("add prompts to favorites");
+      setShowAuthPrompt(true);
+      return;
+    }
+    
+    setIsFavorite(!isFavorite);
+    if (!isFavorite) {
+      toast.success("Added to favorites!");
+    } else {
+      toast.success("Removed from favorites!");
+    }
+  };
+  
+  const handleCommentSubmit = () => {
+    if (!isLoggedIn) {
+      setAuthAction("comment on prompts");
+      setShowAuthPrompt(true);
+      return;
+    }
+    
+    if (newComment.trim()) {
+      setCommentCount(commentCount + 1);
+      toast.success("Comment added!");
+      setNewComment("");
     }
   };
 
@@ -90,6 +176,45 @@ const PromptDetail = () => {
                 </div>
                 <h1 className="text-3xl md:text-4xl font-bold mb-2">{prompt.title}</h1>
                 <p className="text-muted-foreground">{prompt.description}</p>
+                
+                {/* Social actions */}
+                <div className="flex items-center gap-4 mt-4">
+                  <button 
+                    onClick={handleLike}
+                    className={`flex items-center gap-1 text-sm ${isLiked ? 'text-red-500' : 'text-muted-foreground'} hover:text-red-500 transition-colors`}
+                  >
+                    <Heart className={`h-4 w-4 ${isLiked ? 'fill-current' : ''}`} /> 
+                    <span>{likeCount}</span>
+                  </button>
+                  
+                  <button 
+                    onClick={() => setShowComments(!showComments)}
+                    className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    <MessageSquare className="h-4 w-4" /> 
+                    <span>{commentCount}</span>
+                  </button>
+                  
+                  <button 
+                    onClick={handleFavorite}
+                    className={`flex items-center gap-1 text-sm ${isFavorite ? 'text-yellow-500' : 'text-muted-foreground'} hover:text-yellow-500 transition-colors`}
+                  >
+                    {isFavorite ? (
+                      <Bookmark className="h-4 w-4 fill-current" />
+                    ) : (
+                      <BookmarkPlus className="h-4 w-4" />
+                    )}
+                    <span>Favorite</span>
+                  </button>
+                  
+                  <button 
+                    onClick={handleShare}
+                    className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors ml-auto"
+                  >
+                    <Share className="h-4 w-4" />
+                    <span>Share</span>
+                  </button>
+                </div>
               </div>
 
               <Card className="mb-8">
@@ -120,6 +245,35 @@ const PromptDetail = () => {
                   </div>
                 </CardContent>
               </Card>
+              
+              {/* Comments section */}
+              {showComments && (
+                <div className="mb-8">
+                  <h3 className="text-xl font-semibold mb-4">Comments</h3>
+                  
+                  <div className="mb-4">
+                    <Textarea 
+                      placeholder="Add a comment..." 
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      className="mb-2"
+                      disabled={!isLoggedIn}
+                    />
+                    <div className="flex justify-end">
+                      <Button 
+                        onClick={handleCommentSubmit}
+                        disabled={!newComment.trim()}
+                      >
+                        Comment
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  <ScrollArea className="h-[300px]">
+                    <CommentSection promptId={prompt.id} />
+                  </ScrollArea>
+                </div>
+              )}
 
               <div className="mb-8">
                 <h3 className="text-xl font-semibold mb-4">How to use this prompt</h3>
@@ -195,6 +349,13 @@ const PromptDetail = () => {
         </div>
       </main>
       <Footer />
+      
+      {/* Auth prompt dialog */}
+      <AuthPrompt 
+        isOpen={showAuthPrompt} 
+        onClose={() => setShowAuthPrompt(false)}
+        action={authAction}
+      />
     </div>
   );
 };
