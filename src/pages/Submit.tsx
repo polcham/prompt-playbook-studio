@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -27,6 +27,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { promptCategories, promptTools } from "@/data/prompts";
 import { toast } from "sonner";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { File } from "lucide-react";
 
 const formSchema = z.object({
   title: z.string().min(5, { message: "Title must be at least 5 characters" }),
@@ -40,8 +50,25 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+// Common placeholders for prompts
+const placeholders = [
+  { id: "topic", label: "TOPIC", description: "Main subject of the prompt" },
+  { id: "audience", label: "AUDIENCE", description: "Target audience" },
+  { id: "tone", label: "TONE", description: "Tone of voice (formal, casual, etc)" },
+  { id: "length", label: "LENGTH", description: "Expected output length" },
+  { id: "format", label: "FORMAT", description: "Output format (blog, email, etc)" },
+  { id: "keywords", label: "KEYWORDS", description: "Important keywords to include" },
+  { id: "style", label: "STYLE", description: "Writing style" },
+  { id: "goal", label: "GOAL", description: "Goal of the content" },
+  { id: "example", label: "EXAMPLE", description: "Example to follow" },
+  { id: "context", label: "CONTEXT", description: "Background information" },
+];
+
 const Submit = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [placeholderCommandOpen, setPlaceholderCommandOpen] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [textAreaCursorPosition, setTextAreaCursorPosition] = useState<number | null>(null);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -66,6 +93,43 @@ const Submit = () => {
       form.reset();
       setIsSubmitting(false);
     }, 1000);
+  };
+
+  const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    const cursorPos = e.target.selectionStart;
+    setTextAreaCursorPosition(cursorPos);
+    
+    form.setValue("content", value);
+
+    // Check if the last character typed is "/"
+    if (value[cursorPos - 1] === "/" && !placeholderCommandOpen) {
+      setPlaceholderCommandOpen(true);
+    }
+  };
+
+  const handlePlaceholderSelect = (placeholder: string) => {
+    const currentContent = form.getValues("content");
+    const cursorPos = textAreaCursorPosition || 0;
+    
+    // Insert the placeholder at the cursor position, replacing the "/"
+    const newContent = 
+      currentContent.substring(0, cursorPos - 1) + 
+      `[${placeholder}]` + 
+      currentContent.substring(cursorPos);
+    
+    form.setValue("content", newContent);
+    setPlaceholderCommandOpen(false);
+    
+    // Set focus back to the textarea and set cursor position after the inserted placeholder
+    setTimeout(() => {
+      if (textareaRef.current) {
+        textareaRef.current.focus();
+        const newCursorPos = cursorPos - 1 + placeholder.length + 2; // -1 for "/", +2 for "[]"
+        textareaRef.current.setSelectionRange(newCursorPos, newCursorPos);
+        setTextAreaCursorPosition(newCursorPos);
+      }
+    }, 0);
   };
 
   return (
@@ -188,18 +252,56 @@ const Submit = () => {
                   <FormField
                     control={form.control}
                     name="content"
-                    render={({ field }) => (
-                      <FormItem>
+                    render={({ field: { onChange, ...fieldProps } }) => (
+                      <FormItem className="relative">
                         <FormLabel>Prompt Template</FormLabel>
                         <FormControl>
-                          <Textarea
-                            placeholder="Paste your full prompt template here. Use [PLACEHOLDERS] for customizable parts."
-                            className="min-h-[200px] font-mono"
-                            {...field}
-                          />
+                          <div className="relative">
+                            <Textarea
+                              placeholder="Paste your full prompt template here. Use [PLACEHOLDERS] for customizable parts."
+                              className="min-h-[200px] font-mono"
+                              onChange={handleContentChange}
+                              ref={textareaRef}
+                              {...fieldProps}
+                            />
+                            
+                            <Popover
+                              open={placeholderCommandOpen}
+                              onOpenChange={setPlaceholderCommandOpen}
+                            >
+                              <PopoverTrigger className="hidden" />
+                              <PopoverContent 
+                                className="w-[300px] p-0" 
+                                align="start"
+                              >
+                                <Command>
+                                  <CommandInput placeholder="Search placeholders..." />
+                                  <CommandList>
+                                    <CommandEmpty>No placeholders found.</CommandEmpty>
+                                    <CommandGroup>
+                                      {placeholders.map((placeholder) => (
+                                        <CommandItem
+                                          key={placeholder.id}
+                                          onSelect={() => handlePlaceholderSelect(placeholder.label)}
+                                        >
+                                          <File className="mr-2 h-4 w-4" />
+                                          <div>
+                                            <p className="font-medium">{placeholder.label}</p>
+                                            <p className="text-xs text-muted-foreground">
+                                              {placeholder.description}
+                                            </p>
+                                          </div>
+                                        </CommandItem>
+                                      ))}
+                                    </CommandGroup>
+                                  </CommandList>
+                                </Command>
+                              </PopoverContent>
+                            </Popover>
+                          </div>
                         </FormControl>
                         <FormDescription>
-                          The complete prompt template with placeholders in [BRACKETS] for customizable parts.
+                          The complete prompt template with placeholders in [BRACKETS] for customizable parts. Type / to insert placeholder.
                         </FormDescription>
                         <FormMessage />
                       </FormItem>

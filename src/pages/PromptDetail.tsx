@@ -14,18 +14,21 @@ import {
   Share, 
   Bookmark,
   BookmarkPlus,
-  LogIn
+  LogIn,
+  FileText
 } from "lucide-react";
 import CommentSection from "@/components/CommentSection";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import AuthPrompt from "@/components/AuthPrompt";
+import { extractPlaceholders, formatPlaceholders } from "@/utils/promptUtils";
 
 const PromptDetail = () => {
   const { id } = useParams<{ id: string }>();
   const [prompt, setPrompt] = useState<Prompt | undefined>(undefined);
   const [relatedPrompts, setRelatedPrompts] = useState<Prompt[]>([]);
   const [copied, setCopied] = useState(false);
+  const [placeholders, setPlaceholders] = useState<string[]>([]);
   
   // Mock authentication state - in a real app, this would come from your auth provider
   const isLoggedIn = false;
@@ -50,6 +53,10 @@ const PromptDetail = () => {
       setCommentCount(Math.floor(Math.random() * 20));
 
       if (foundPrompt) {
+        // Extract placeholders from the prompt content
+        const extractedPlaceholders = extractPlaceholders(foundPrompt.content);
+        setPlaceholders(extractedPlaceholders);
+        
         const related = getPromptsByCategory(foundPrompt.category)
           .filter((p) => p.id !== foundPrompt.id)
           .slice(0, 3);
@@ -244,6 +251,18 @@ const PromptDetail = () => {
                   <div className="bg-muted p-4 rounded-md font-mono text-sm whitespace-pre-wrap">
                     {prompt.content}
                   </div>
+                  
+                  {placeholders.length > 0 && (
+                    <div className="mt-4 p-3 bg-muted/50 rounded-md border">
+                      <div className="flex items-center gap-2 mb-1">
+                        <FileText className="h-4 w-4 text-primary" />
+                        <h4 className="font-medium">Placeholders</h4>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        {formatPlaceholders(placeholders)}
+                      </p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
               
