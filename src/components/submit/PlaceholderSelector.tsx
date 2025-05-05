@@ -63,8 +63,14 @@ const PlaceholderSelector = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <div className={`fixed inset-0 bg-black bg-opacity-50 z-40 ${isOpen ? 'block' : 'hidden'}`} onClick={() => onOpenChange(false)} />
-      <DialogContent className="sm:max-w-md w-[90%] max-w-[500px] p-0">
+      {/* Add an overlay that dims the background */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-40" 
+          onClick={() => onOpenChange(false)}
+        />
+      )}
+      <DialogContent className="sm:max-w-md w-[90%] max-w-[500px] p-0 fixed left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50">
         <Command>
           <CommandInput
             placeholder="Search placeholders..."

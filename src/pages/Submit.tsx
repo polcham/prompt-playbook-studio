@@ -36,6 +36,8 @@ const mockAuth = {
 const Submit = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(mockAuth.isAuthenticated);
+  const [showAuthPrompt, setShowAuthPrompt] = useState(!isAuthenticated);
+  
   // Add console log to verify placeholders hook is initialized correctly
   const placeholdersHook = usePlaceholders();
   console.log("placeholdersHook in Submit:", placeholdersHook);
@@ -96,9 +98,9 @@ const Submit = () => {
               </p>
             </div>
             <AuthPrompt 
-              title="Sign in to submit prompts"
-              description="You need to be signed in to share your prompts with the community."
-              onSuccess={() => setIsAuthenticated(true)}
+              isOpen={showAuthPrompt}
+              onClose={() => setShowAuthPrompt(false)}
+              action="submit prompts"
             />
           </div>
         </main>
