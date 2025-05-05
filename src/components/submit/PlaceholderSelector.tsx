@@ -51,6 +51,10 @@ const PlaceholderSelector = ({
     
     // Select the newly created placeholder
     onSelect(newPlaceholder.label);
+    
+    // Clear the search term after adding a new placeholder
+    setSearchTerm("");
+    
     toast.success(`Placeholder [${newPlaceholder.label}] added!`);
     onOpenChange(false);
   };
