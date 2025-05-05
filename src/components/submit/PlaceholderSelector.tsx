@@ -29,23 +29,24 @@ const PlaceholderSelector = ({
   cursorCoords,
   placeholdersHook,
 }: PlaceholderSelectorProps) => {
-  const { placeholders, addPlaceholder } = placeholdersHook;
+  // Add a null check to prevent the destructuring error
+  const { placeholders, addPlaceholder } = placeholdersHook || {};
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Filter placeholders based on search term
-  const filteredPlaceholders = searchTerm
+  // Filter placeholders based on search term only if placeholders exist
+  const filteredPlaceholders = placeholders && searchTerm
     ? placeholders.filter((p) =>
         p.label.toLowerCase().includes(searchTerm.toLowerCase()) ||
         p.description.toLowerCase().includes(searchTerm.toLowerCase())
       )
-    : placeholders;
+    : placeholders || [];
 
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
   };
 
   const handleAddNewPlaceholder = () => {
-    if (!searchTerm) return;
+    if (!searchTerm || !addPlaceholder) return;
     
     // Create new placeholder if it doesn't exist
     const newPlaceholder = addPlaceholder(searchTerm);
@@ -54,6 +55,12 @@ const PlaceholderSelector = ({
     onSelect(newPlaceholder.label);
     toast.success(`Placeholder [${newPlaceholder.label}] added!`);
   };
+
+  // Early return with empty component if placeholdersHook is undefined
+  if (!placeholdersHook) {
+    console.error("placeholdersHook is undefined in PlaceholderSelector");
+    return null;
+  }
 
   return (
     <Popover

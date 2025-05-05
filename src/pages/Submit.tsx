@@ -23,7 +23,9 @@ const formSchema = z.object({
 
 const Submit = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Add console log to verify placeholders hook is initialized correctly
   const placeholdersHook = usePlaceholders();
+  console.log("placeholdersHook in Submit:", placeholdersHook);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),

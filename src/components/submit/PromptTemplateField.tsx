@@ -20,6 +20,9 @@ interface PromptTemplateFieldProps {
 }
 
 const PromptTemplateField = ({ form, placeholdersHook }: PromptTemplateFieldProps) => {
+  // Add a console log to check the value of placeholdersHook
+  console.log("placeholdersHook in PromptTemplateField:", placeholdersHook);
+
   const [placeholderCommandOpen, setPlaceholderCommandOpen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [textAreaCursorPosition, setTextAreaCursorPosition] = useState<number | null>(null);
@@ -129,13 +132,16 @@ const PromptTemplateField = ({ form, placeholdersHook }: PromptTemplateFieldProp
                 {...fieldProps}
               />
               
-              <PlaceholderSelector
-                isOpen={placeholderCommandOpen}
-                onOpenChange={setPlaceholderCommandOpen}
-                onSelect={handlePlaceholderSelect}
-                cursorCoords={cursorCoords}
-                placeholdersHook={placeholdersHook}
-              />
+              {/* Only render the PlaceholderSelector if placeholdersHook is defined */}
+              {placeholdersHook && (
+                <PlaceholderSelector
+                  isOpen={placeholderCommandOpen}
+                  onOpenChange={setPlaceholderCommandOpen}
+                  onSelect={handlePlaceholderSelect}
+                  cursorCoords={cursorCoords}
+                  placeholdersHook={placeholdersHook}
+                />
+              )}
             </div>
           </FormControl>
           <FormDescription>
