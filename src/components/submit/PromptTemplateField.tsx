@@ -11,25 +11,15 @@ import {
 } from "@/components/ui/form";
 import { UseFormReturn } from "react-hook-form";
 import PlaceholderSelector from "./PlaceholderSelector";
-import { Placeholder } from "@/utils/promptUtils";
-
-interface FormValues {
-  title: string;
-  description: string;
-  content: string;
-  tool: string;
-  category: string;
-  authorName: string;
-  tags: string;
-}
+import { UsePlaceholdersReturn } from "@/hooks/usePlaceholders";
+import { FormValues } from "./PromptFormFields";
 
 interface PromptTemplateFieldProps {
   form: UseFormReturn<FormValues>;
-  placeholders: Placeholder[];
-  setPlaceholders: React.Dispatch<React.SetStateAction<Placeholder[]>>;
+  placeholdersHook: UsePlaceholdersReturn;
 }
 
-const PromptTemplateField = ({ form, placeholders, setPlaceholders }: PromptTemplateFieldProps) => {
+const PromptTemplateField = ({ form, placeholdersHook }: PromptTemplateFieldProps) => {
   const [placeholderCommandOpen, setPlaceholderCommandOpen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [textAreaCursorPosition, setTextAreaCursorPosition] = useState<number | null>(null);
@@ -144,8 +134,7 @@ const PromptTemplateField = ({ form, placeholders, setPlaceholders }: PromptTemp
                 onOpenChange={setPlaceholderCommandOpen}
                 onSelect={handlePlaceholderSelect}
                 cursorCoords={cursorCoords}
-                placeholders={placeholders}
-                setPlaceholders={setPlaceholders}
+                placeholdersHook={placeholdersHook}
               />
             </div>
           </FormControl>

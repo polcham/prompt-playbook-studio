@@ -9,7 +9,7 @@ import { Form } from "@/components/ui/form";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { usePlaceholders } from "@/hooks/usePlaceholders";
-import PromptFormFields from "@/components/submit/PromptFormFields";
+import PromptFormFields, { FormValues } from "@/components/submit/PromptFormFields";
 
 const formSchema = z.object({
   title: z.string().min(5, { message: "Title must be at least 5 characters" }),
@@ -21,11 +21,9 @@ const formSchema = z.object({
   tags: z.string(),
 });
 
-type FormValues = z.infer<typeof formSchema>;
-
 const Submit = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { placeholders, setPlaceholders } = usePlaceholders();
+  const placeholdersHook = usePlaceholders();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -74,8 +72,7 @@ const Submit = () => {
                   <PromptFormFields 
                     form={form} 
                     isSubmitting={isSubmitting} 
-                    placeholders={placeholders}
-                    setPlaceholders={setPlaceholders}
+                    placeholdersHook={placeholdersHook}
                   />
                 </form>
               </Form>

@@ -12,15 +12,14 @@ import { Popover, PopoverContent } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { File, PlusCircle } from "lucide-react";
 import { toast } from "sonner";
-import { Placeholder, createPlaceholder } from "@/utils/promptUtils";
+import { UsePlaceholdersReturn } from "@/hooks/usePlaceholders";
 
 interface PlaceholderSelectorProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   onSelect: (placeholder: string) => void;
   cursorCoords: { top: number; left: number };
-  placeholders: Placeholder[];
-  setPlaceholders: React.Dispatch<React.SetStateAction<Placeholder[]>>;
+  placeholdersHook: UsePlaceholdersReturn;
 }
 
 const PlaceholderSelector = ({
@@ -28,9 +27,9 @@ const PlaceholderSelector = ({
   onOpenChange,
   onSelect,
   cursorCoords,
-  placeholders,
-  setPlaceholders,
+  placeholdersHook,
 }: PlaceholderSelectorProps) => {
+  const { placeholders, addPlaceholder } = placeholdersHook;
   const [searchTerm, setSearchTerm] = useState("");
 
   // Filter placeholders based on search term
@@ -45,22 +44,15 @@ const PlaceholderSelector = ({
     setSearchTerm(value);
   };
 
-  const addNewPlaceholder = () => {
+  const handleAddNewPlaceholder = () => {
     if (!searchTerm) return;
     
-    // Check if placeholder already exists (case insensitive)
-    const exists = placeholders.some(p => 
-      p.label.toLowerCase() === searchTerm.toLowerCase()
-    );
+    // Create new placeholder if it doesn't exist
+    const newPlaceholder = addPlaceholder(searchTerm);
     
-    if (!exists) {
-      const newPlaceholder = createPlaceholder(searchTerm);
-      setPlaceholders(prev => [...prev, newPlaceholder]);
-      
-      // Select the newly created placeholder
-      onSelect(newPlaceholder.label);
-      toast.success(`New placeholder [${newPlaceholder.label}] created!`);
-    }
+    // Select the newly created placeholder
+    onSelect(newPlaceholder.label);
+    toast.success(`Placeholder [${newPlaceholder.label}] added!`);
   };
 
   return (
@@ -94,7 +86,7 @@ const PlaceholderSelector = ({
                   variant="ghost"
                   size="sm"
                   className="mx-auto mt-2 text-primary flex items-center gap-1"
-                  onClick={addNewPlaceholder}
+                  onClick={handleAddNewPlaceholder}
                 >
                   <PlusCircle className="h-4 w-4" />
                   Create "{searchTerm.toUpperCase()}"

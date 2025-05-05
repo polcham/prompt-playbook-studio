@@ -1,7 +1,15 @@
 
 /**
- * Extract placeholders from a prompt content string
- * Placeholders are defined as text inside square brackets []
+ * Placeholder Types and Interfaces
+ */
+export interface Placeholder {
+  id: string;
+  label: string;
+  description: string;
+}
+
+/**
+ * Placeholder extraction and formatting utilities
  */
 export const extractPlaceholders = (content: string): string[] => {
   const placeholderRegex = /\[([^\]]+)\]/g;
@@ -13,9 +21,6 @@ export const extractPlaceholders = (content: string): string[] => {
   return [...new Set(matches.map(match => match.replace(/[\[\]]/g, '')))];
 };
 
-/**
- * Format a list of placeholders into a readable string
- */
 export const formatPlaceholders = (placeholders: string[]): string => {
   if (!placeholders || placeholders.length === 0) {
     return "No placeholders found";
@@ -25,28 +30,28 @@ export const formatPlaceholders = (placeholders: string[]): string => {
 };
 
 /**
+ * Common placeholder descriptions for frequently used placeholders
+ */
+const commonPlaceholderDescriptions: Record<string, string> = {
+  "TOPIC": "Main subject of the prompt",
+  "AUDIENCE": "Target audience",
+  "TONE": "Tone of voice (formal, casual, etc)",
+  "LENGTH": "Expected output length",
+  "FORMAT": "Output format (blog, email, etc)",
+  "KEYWORDS": "Important keywords to include",
+  "STYLE": "Writing style",
+  "GOAL": "Goal of the content",
+  "EXAMPLE": "Example to follow",
+  "CONTEXT": "Background information",
+};
+
+/**
  * Generate a description for a new placeholder
- * @param placeholder The placeholder name
- * @returns An AI-generated description
  */
 export const generatePlaceholderDescription = (placeholder: string): string => {
-  // Map of common placeholder descriptions
-  const commonDescriptions: Record<string, string> = {
-    "TOPIC": "Main subject of the prompt",
-    "AUDIENCE": "Target audience",
-    "TONE": "Tone of voice (formal, casual, etc)",
-    "LENGTH": "Expected output length",
-    "FORMAT": "Output format (blog, email, etc)",
-    "KEYWORDS": "Important keywords to include",
-    "STYLE": "Writing style",
-    "GOAL": "Goal of the content",
-    "EXAMPLE": "Example to follow",
-    "CONTEXT": "Background information",
-  };
-
   // Check if we have a predefined description
-  if (placeholder.toUpperCase() in commonDescriptions) {
-    return commonDescriptions[placeholder.toUpperCase()];
+  if (placeholder.toUpperCase() in commonPlaceholderDescriptions) {
+    return commonPlaceholderDescriptions[placeholder.toUpperCase()];
   }
 
   // Generate a description based on the placeholder name
@@ -57,16 +62,7 @@ export const generatePlaceholderDescription = (placeholder: string): string => {
 };
 
 /**
- * Placeholder interface
- */
-export interface Placeholder {
-  id: string;
-  label: string;
-  description: string;
-}
-
-/**
- * Create a new placeholder object
+ * Create a new placeholder object with proper ID, label and description
  */
 export const createPlaceholder = (label: string): Placeholder => {
   return {

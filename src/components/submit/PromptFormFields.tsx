@@ -20,9 +20,9 @@ import { UseFormReturn } from "react-hook-form";
 import { promptCategories, promptTools } from "@/data/prompts";
 import { Button } from "@/components/ui/button";
 import PromptTemplateField from "./PromptTemplateField";
-import { Placeholder } from "@/utils/promptUtils";
+import { UsePlaceholdersReturn } from "@/hooks/usePlaceholders";
 
-interface FormValues {
+export interface FormValues {
   title: string;
   description: string;
   content: string;
@@ -35,15 +35,13 @@ interface FormValues {
 interface PromptFormFieldsProps {
   form: UseFormReturn<FormValues>;
   isSubmitting: boolean;
-  placeholders: Placeholder[];
-  setPlaceholders: React.Dispatch<React.SetStateAction<Placeholder[]>>;
+  placeholdersHook: UsePlaceholdersReturn;
 }
 
 const PromptFormFields = ({
   form,
   isSubmitting,
-  placeholders,
-  setPlaceholders,
+  placeholdersHook,
 }: PromptFormFieldsProps) => {
   return (
     <>
@@ -147,8 +145,7 @@ const PromptFormFields = ({
 
       <PromptTemplateField 
         form={form} 
-        placeholders={placeholders} 
-        setPlaceholders={setPlaceholders} 
+        placeholdersHook={placeholdersHook} 
       />
 
       <FormField
