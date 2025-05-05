@@ -26,55 +26,6 @@ const PromptTemplateField = ({ form, placeholdersHook }: PromptTemplateFieldProp
   const [placeholderCommandOpen, setPlaceholderCommandOpen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [textAreaCursorPosition, setTextAreaCursorPosition] = useState<number | null>(null);
-  const [cursorCoords, setCursorCoords] = useState({ top: 0, left: 0 });
-
-  // Calculate cursor position for popover
-  const calculateCursorCoordinates = useCallback(() => {
-    if (!textareaRef.current || textAreaCursorPosition === null) return;
-    
-    const textarea = textareaRef.current;
-    const text = textarea.value;
-    
-    // Create a mirror div to calculate position
-    const mirror = document.createElement('div');
-    mirror.style.cssText = getComputedStyle(textarea).cssText;
-    mirror.style.height = 'auto';
-    mirror.style.width = `${textarea.offsetWidth}px`;
-    mirror.style.position = 'absolute';
-    mirror.style.visibility = 'hidden';
-    mirror.style.whiteSpace = 'pre-wrap';
-    mirror.style.wordBreak = 'break-word';
-    mirror.style.paddingBottom = '0';
-    document.body.appendChild(mirror);
-    
-    // Split text at cursor position
-    const textBeforeCursor = text.substring(0, textAreaCursorPosition);
-    const textAfterCursor = text.substring(textAreaCursorPosition);
-    
-    // Add content to the mirror
-    mirror.textContent = textBeforeCursor;
-    const cursorSpan = document.createElement('span');
-    cursorSpan.textContent = '|';
-    mirror.appendChild(cursorSpan);
-    mirror.appendChild(document.createTextNode(textAfterCursor));
-    
-    // Get coordinates
-    const cursorPos = cursorSpan.getBoundingClientRect();
-    const textareaPos = textarea.getBoundingClientRect();
-    
-    const top = cursorPos.top - textareaPos.top + textarea.scrollTop;
-    const left = cursorPos.left - textareaPos.left + textarea.scrollLeft;
-    
-    document.body.removeChild(mirror);
-    
-    setCursorCoords({ top, left });
-  }, [textAreaCursorPosition]);
-
-  useEffect(() => {
-    if (placeholderCommandOpen) {
-      calculateCursorCoordinates();
-    }
-  }, [placeholderCommandOpen, calculateCursorCoordinates]);
 
   const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value;
@@ -86,8 +37,6 @@ const PromptTemplateField = ({ form, placeholdersHook }: PromptTemplateFieldProp
     // Check if the last character typed is "/"
     if (value[cursorPos - 1] === "/" && !placeholderCommandOpen) {
       setPlaceholderCommandOpen(true);
-      // We need to calculate coordinates after the state update
-      setTimeout(calculateCursorCoordinates, 0);
     }
   };
 
@@ -138,7 +87,6 @@ const PromptTemplateField = ({ form, placeholdersHook }: PromptTemplateFieldProp
                   isOpen={placeholderCommandOpen}
                   onOpenChange={setPlaceholderCommandOpen}
                   onSelect={handlePlaceholderSelect}
-                  cursorCoords={cursorCoords}
                   placeholdersHook={placeholdersHook}
                 />
               )}

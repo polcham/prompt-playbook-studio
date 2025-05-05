@@ -8,7 +8,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { Popover, PopoverContent } from "@/components/ui/popover";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { File, PlusCircle } from "lucide-react";
 import { toast } from "sonner";
@@ -18,7 +18,6 @@ interface PlaceholderSelectorProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   onSelect: (placeholder: string) => void;
-  cursorCoords: { top: number; left: number };
   placeholdersHook: UsePlaceholdersReturn;
 }
 
@@ -26,7 +25,6 @@ const PlaceholderSelector = ({
   isOpen,
   onOpenChange,
   onSelect,
-  cursorCoords,
   placeholdersHook,
 }: PlaceholderSelectorProps) => {
   // Add a null check to prevent the destructuring error
@@ -54,6 +52,7 @@ const PlaceholderSelector = ({
     // Select the newly created placeholder
     onSelect(newPlaceholder.label);
     toast.success(`Placeholder [${newPlaceholder.label}] added!`);
+    onOpenChange(false);
   };
 
   // Early return with empty component if placeholdersHook is undefined
@@ -63,29 +62,18 @@ const PlaceholderSelector = ({
   }
 
   return (
-    <Popover
-      open={isOpen}
-      onOpenChange={onOpenChange}
-    >
-      <PopoverContent
-        className="w-[300px] p-0"
-        align="start"
-        style={{
-          position: 'absolute',
-          top: `${cursorCoords.top}px`,
-          left: `${cursorCoords.left}px`,
-          transform: 'translateY(20px)'
-        }}
-        onEscapeKeyDown={() => onOpenChange(false)}
-        onInteractOutside={() => onOpenChange(false)}
-      >
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <div className={`fixed inset-0 bg-black bg-opacity-50 z-40 ${isOpen ? 'block' : 'hidden'}`} onClick={() => onOpenChange(false)} />
+      <DialogContent className="sm:max-w-md w-[90%] max-w-[500px] p-0">
         <Command>
           <CommandInput
             placeholder="Search placeholders..."
             value={searchTerm}
             onValueChange={handleSearchChange}
+            className="border-none focus:ring-0"
+            autoFocus
           />
-          <CommandList>
+          <CommandList className="max-h-[300px]">
             <CommandEmpty>
               <div className="py-3 text-center text-sm">
                 <p>No placeholders found.</p>
@@ -104,7 +92,10 @@ const PlaceholderSelector = ({
               {filteredPlaceholders.map((placeholder) => (
                 <CommandItem
                   key={placeholder.id}
-                  onSelect={() => onSelect(placeholder.label)}
+                  onSelect={() => {
+                    onSelect(placeholder.label);
+                    onOpenChange(false);
+                  }}
                 >
                   <File className="mr-2 h-4 w-4" />
                   <div>
@@ -118,8 +109,8 @@ const PlaceholderSelector = ({
             </CommandGroup>
           </CommandList>
         </Command>
-      </PopoverContent>
-    </Popover>
+      </DialogContent>
+    </Dialog>
   );
 };
 

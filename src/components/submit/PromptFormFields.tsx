@@ -36,12 +36,14 @@ interface PromptFormFieldsProps {
   form: UseFormReturn<FormValues>;
   isSubmitting: boolean;
   placeholdersHook: UsePlaceholdersReturn;
+  hideAuthorField?: boolean; 
 }
 
 const PromptFormFields = ({
   form,
   isSubmitting,
   placeholdersHook,
+  hideAuthorField = false,
 }: PromptFormFieldsProps) => {
   return (
     <>
@@ -165,22 +167,25 @@ const PromptFormFields = ({
         )}
       />
 
-      <FormField
-        control={form.control}
-        name="authorName"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Your Name</FormLabel>
-            <FormControl>
-              <Input placeholder="How you want to be credited" {...field} />
-            </FormControl>
-            <FormDescription>
-              Your name or username to be shown as the author.
-            </FormDescription>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+      {/* Only show author name field when not authenticated */}
+      {!hideAuthorField && (
+        <FormField
+          control={form.control}
+          name="authorName"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Your Name</FormLabel>
+              <FormControl>
+                <Input placeholder="How you want to be credited" {...field} />
+              </FormControl>
+              <FormDescription>
+                Your name or username to be shown as the author.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      )}
 
       <Button type="submit" className="w-full" disabled={isSubmitting}>
         {isSubmitting ? "Submitting..." : "Submit Prompt for Review"}
