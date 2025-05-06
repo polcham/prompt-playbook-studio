@@ -99,7 +99,7 @@ const Submit = () => {
             </p>
           </div>
 
-          <Card>
+          <Card className="relative">
             {!isAuthenticated && (
               <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 flex flex-col items-center justify-center p-6 text-center">
                 <h2 className="text-2xl font-bold mb-2">Sign in to submit a prompt</h2>
