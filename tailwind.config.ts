@@ -79,6 +79,10 @@ export default {
 				md: 'calc(var(--radius) - 2px)',
 				sm: 'calc(var(--radius) - 4px)'
 			},
+			fontFamily: {
+				sans: ['var(--font-sans)', 'sans-serif'],
+				display: ['var(--font-display)', 'sans-serif'],
+			},
 			keyframes: {
 				'accordion-down': {
 					from: {
@@ -112,10 +116,6 @@ export default {
 				'accordion-up': 'accordion-up 0.2s ease-out',
                 'fade-in': 'fade-in 0.3s ease-out'
 			},
-            fontFamily: {
-                'sans': ['Inter', 'system-ui', 'sans-serif'],
-                'display': ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
-            }
 		}
 	},
 	plugins: [require("tailwindcss-animate")],
