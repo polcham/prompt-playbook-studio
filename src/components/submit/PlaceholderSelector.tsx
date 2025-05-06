@@ -1,7 +1,5 @@
 
-"use client";
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Command,
   CommandEmpty,
