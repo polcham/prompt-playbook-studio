@@ -45,8 +45,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${jakarta.variable}`}>
-      <body className="font-sans">
+    <html lang="en">
+      <body className={`${inter.variable} ${jakarta.variable} font-sans`}>
         <QueryClientProvider client={queryClient}>
           <DarkModeProvider>
             <TooltipProvider>

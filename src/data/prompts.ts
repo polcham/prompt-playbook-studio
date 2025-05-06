@@ -1,3 +1,4 @@
+
 export interface Prompt {
   id: string;
   title: string;
@@ -11,7 +12,6 @@ export interface Prompt {
   likes: number;
   featured?: boolean;
   trending?: boolean;
-  example: string;
 }
 
 export const promptCategories = [
@@ -46,8 +46,7 @@ export const samplePrompts: Prompt[] = [
     createdAt: '2023-04-15',
     likes: 345,
     featured: true,
-    trending: true,
-    example: 'For example, if the topic is "Remote Work Best Practices":\n\nIntroduction: Brief history of remote work, its rise in popularity, and importance in today\'s workplace.\n\n1. Setting Up Your Workspace\n   - Ergonomic considerations\n   - Essential equipment\n   - Separating work from living space\n\n2. Time Management Strategies\n   - Setting boundaries\n   - Productivity techniques\n   - Avoiding burnout'
+    trending: true
   },
   {
     id: 'product-description',
@@ -60,8 +59,7 @@ export const samplePrompts: Prompt[] = [
     authorName: 'Marketing Pro',
     createdAt: '2023-05-10',
     likes: 289,
-    featured: true,
-    example: 'For a luxury watch:\n\n**Elegance on Your Wrist: The Chronos Elite**\n\nThe Chronos Elite is a precision-crafted timepiece designed for the discerning professional who values both style and functionality. Perfect for busy executives and style connoisseurs alike, this watch combines classic design with modern technology.\n\nKey features include a scratch-resistant sapphire crystal face, 100m water resistance, and a precision Swiss movement. Experience the confidence that comes with impeccable timekeeping and the subtle elevation of your professional presence.'
+    featured: true
   },
   {
     id: 'fantasy-landscape',
@@ -74,8 +72,7 @@ export const samplePrompts: Prompt[] = [
     authorName: 'Digital Artist',
     createdAt: '2023-06-05',
     likes: 521,
-    trending: true,
-    example: 'A breathtaking fantasy landscape with towering crystal mountains, featuring magical floating islands and ancient dragons. The scene is illuminated by twin moons, creating a mystical, ethereal atmosphere. The color palette includes deep purples, glowing teals, and amber highlights. Style: highly detailed digital art, 8k resolution, concept art by Thomas Kinkade and Roger Dean.'
+    trending: true
   },
   {
     id: 'code-refactoring',
@@ -105,8 +102,7 @@ Provide comments explaining the major changes and why they improve the code.`,
     authorName: 'Dev Expert',
     createdAt: '2023-03-22',
     likes: 412,
-    trending: true,
-    example: 'For a JavaScript function that calculates factorial recursively:\n\n```javascript\n// Before\nfunction f(n) {\nif(n == 0) return 1;\nreturn n * f(n-1);\n}\n```\n\n```javascript\n// After\n/**\n * Calculates the factorial of a number using recursion\n * @param {number} number - The number to calculate factorial for\n * @returns {number} The factorial result\n */\nfunction calculateFactorial(number) {\n  // Base case: factorial of 0 is 1\n  if (number === 0) return 1;\n  \n  // Recursive case: n! = n * (n-1)!\n  return number * calculateFactorial(number - 1);\n}\n```'
+    trending: true
   },
   {
     id: 'marketing-campaign',
@@ -130,8 +126,7 @@ Our brand voice is [BRAND VOICE], and we want to emphasize these unique selling 
     authorName: 'Campaign Strategist',
     createdAt: '2023-07-12',
     likes: 278,
-    featured: true,
-    example: 'Marketing Campaign for Eco-Friendly Water Bottles:\n\nCampaign Concept: "The Last Bottle You\'ll Ever Need"\n\nKey Messaging:\n- Primary: "Join the refill revolution"\n- Secondary: "Save 500 plastic bottles a year"\n\nChannels:\n1. Instagram: Influencer partnerships with outdoor enthusiasts and sustainability creators\n2. Email: 6-part educational series on plastic pollution impact\n3. In-store: Retail partnerships with REI and Whole Foods for displays\n\nTimeline: 3-month campaign, launching on Earth Day with 4-week teaser campaign'
+    featured: true
   },
   {
     id: 'character-portrait',
@@ -143,8 +138,7 @@ Our brand voice is [BRAND VOICE], and we want to emphasize these unique selling 
     tags: ['characters', 'portraits', 'illustration'],
     authorName: 'Character Designer',
     createdAt: '2023-05-30',
-    likes: 367,
-    example: 'Create a detailed portrait of an elven mage with silver hair and piercing blue eyes. Their expression shows quiet determination, and they are wearing ornate blue and silver robes with astronomical symbols. The character has a crescent moon birthmark on their forehead and is posed casting a spell with glowing hands raised. The background suggests an ancient library tower at night. Lighting is dramatic with blue spell light illuminating the face from below. Style: digital fantasy illustration, 8k, highly detailed.'
+    likes: 367
   },
   {
     id: 'business-pitch',
@@ -171,8 +165,7 @@ Our primary competitors are [COMPETITOR 1] and [COMPETITOR 2]. Our key different
     tags: ['startup', 'pitch', 'entrepreneurship'],
     authorName: 'Startup Founder',
     createdAt: '2023-04-18',
-    likes: 298,
-    example: 'Pitch for GreenGrow Indoor Agriculture Technology:\n\n"What if you could grow 90% more food using 95% less water, in any climate, all year round? At GreenGrow, we\'re revolutionizing food production through our patent-pending vertical hydroponic systems that make sustainable farming accessible anywhere.\n\nFood insecurity affects over 800 million people globally, and traditional agriculture is increasingly vulnerable to climate change. Our modular farming units use AI-driven climate control and specialized LED lighting to grow produce with 30% higher nutritional value than conventional farming.\n\nWe\'re targeting the $12 billion commercial indoor farming market, with a focus on restaurants and grocery suppliers seeking locally-grown, premium produce. Our current pilot with Whole Foods has shown 40% reduction in their produce transportation costs."'
+    likes: 298
   },
   {
     id: 'weekly-planner',
@@ -208,8 +201,7 @@ Please create a structured day-by-day plan that optimizes my productivity based 
     authorName: 'Productivity Coach',
     createdAt: '2023-06-22',
     likes: 245,
-    trending: true,
-    example: 'Weekly Plan for Project Launch Preparation:\n\nMonday:\n8:00-10:00 - HIGH PRIORITY: Finalize presentation deck (2h)\n10:15-10:30 - Quick break\n10:30-12:00 - Content review with marketing team (1.5h)\n...\n\nTuesday:\n9:00-11:30 - HIGH PRIORITY: Rehearse presentation (tech check first) (2.5h)\n...\n\nFocus Tips:\n1. Block notifications during deep work sessions\n2. Use the Pomodoro technique (25min work/5min break) for design tasks\n3. Daily 5-minute end-of-day review to track completion and adjust next day\'s plan'
+    trending: true
   }
 ];
 
