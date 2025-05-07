@@ -8,3 +8,10 @@ Disallow: /login
 
 # Sitemap
 Sitemap: https://example.com/sitemap.xml
+
+# Cache time
+Crawl-delay: 10
+
+# Additional sitemaps
+# Sitemap: https://example.com/sitemap-prompts.xml
+

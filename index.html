@@ -8,6 +8,12 @@
     <meta name="description" content="Discover and share AI prompt templates for ChatGPT, Midjourney, Claude, and more. Boost your AI productivity with PromptBook." />
     <meta name="author" content="PromptBook" />
 
+    <!-- Resource Hints -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+
     <!-- Open Graph / Facebook -->
     <meta property="og:title" content="PromptBook - AI Prompt Library" />
     <meta property="og:description" content="Discover and share AI prompt templates for ChatGPT, Midjourney, Claude, and more." />
@@ -19,15 +25,25 @@
     <meta name="twitter:site" content="@lovable_dev" />
     <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
     
-    <!-- Preload fonts -->
+    <!-- Preload fonts with display swap for faster rendering -->
     <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" as="style" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" />
+    
+    <!-- Preload critical assets -->
+    <link rel="preload" as="script" href="/src/main.tsx" />
+    
+    <!-- Enable Progressive Web App capabilities -->
+    <meta name="theme-color" content="#ffffff" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    
+    <!-- Modern loading strategies -->
+    <script type="module" src="/src/main.tsx" async></script>
   </head>
 
   <body>
     <div id="root"></div>
     <!-- IMPORTANT: DO NOT REMOVE THIS SCRIPT TAG OR THIS VERY COMMENT! -->
     <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
-    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
