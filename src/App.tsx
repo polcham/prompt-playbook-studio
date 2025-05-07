@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,15 +7,28 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { DarkModeProvider } from "./contexts/DarkModeContext";
 
+// Regular import for primary routes
 import Index from "./pages/Index";
-import Library from "./pages/Library";
-import PromptDetail from "./pages/PromptDetail";
-import Submit from "./pages/Submit";
 import NotFound from "./pages/NotFound";
-import Login from "./pages/Login";
-import Favorites from "./pages/Favorites";
 
-const queryClient = new QueryClient();
+// Lazy load secondary routes for better performance
+const Library = lazy(() => import("./pages/Library"));
+const PromptDetail = lazy(() => import("./pages/PromptDetail"));
+const Submit = lazy(() => import("./pages/Submit"));
+const Login = lazy(() => import("./pages/Login"));
+const Favorites = lazy(() => import("./pages/Favorites"));
+
+// Initialize QueryClient with better caching strategy
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60 * 1000, // 1 minute
+      cacheTime: 5 * 60 * 1000, // 5 minutes
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const App = () => (
   <React.StrictMode>
@@ -27,13 +40,34 @@ const App = () => (
             <Sonner />
             <Routes>
               <Route path="/" element={<Index />} />
-              <Route path="/library" element={<Library />} />
-              <Route path="/prompt/:id" element={<PromptDetail />} />
-              <Route path="/submit" element={<Submit />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/favorites" element={<Favorites />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
+              
+              {/* Wrap lazy-loaded routes with Suspense */}
+              <Route path="/library" element={
+                <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Loading...</div>}>
+                  <Library />
+                </Suspense>
+              } />
+              <Route path="/prompt/:id" element={
+                <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Loading...</div>}>
+                  <PromptDetail />
+                </Suspense>
+              } />
+              <Route path="/submit" element={
+                <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Loading...</div>}>
+                  <Submit />
+                </Suspense>
+              } />
+              <Route path="/login" element={
+                <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Loading...</div>}>
+                  <Login />
+                </Suspense>
+              } />
+              <Route path="/favorites" element={
+                <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Loading...</div>}>
+                  <Favorites />
+                </Suspense>
+              } />
             </Routes>
           </TooltipProvider>
         </BrowserRouter>

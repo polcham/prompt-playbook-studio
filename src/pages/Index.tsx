@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,9 +8,20 @@ import Footer from "@/components/Footer";
 import PromptCard from "@/components/PromptCard";
 import { getFeaturedPrompts, getTrendingPrompts } from "@/data/prompts";
 
+// Lazy load the newsletter form to improve initial page load
+const NewsletterForm = lazy(() => import("@/components/NewsletterForm"));
+
 const Index = () => {
-  const featuredPrompts = getFeaturedPrompts();
-  const trendingPrompts = getTrendingPrompts();
+  const [featuredPrompts, setFeaturedPrompts] = useState([]);
+  const [trendingPrompts, setTrendingPrompts] = useState([]);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    // Simulate data fetching with priority
+    setFeaturedPrompts(getFeaturedPrompts());
+    setTrendingPrompts(getTrendingPrompts());
+    setIsLoaded(true);
+  }, []);
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -49,8 +60,12 @@ const Index = () => {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {featuredPrompts.map((prompt) => (
-                <PromptCard key={prompt.id} prompt={prompt} />
+              {featuredPrompts.map((prompt, index) => (
+                <PromptCard 
+                  key={prompt.id} 
+                  prompt={prompt} 
+                  priority={index < 3} // Prioritize loading for first 3 items
+                />
               ))}
             </div>
           </div>
@@ -62,7 +77,7 @@ const Index = () => {
             <div className="flex justify-between items-center mb-10">
               <h2 className="text-2xl md:text-3xl font-bold">
                 <span className="flex items-center gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-trending-up text-brand-purple">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-trending-up text-brand-purple" aria-hidden="true">
                     <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline><polyline points="16 7 22 7 22 13"></polyline>
                   </svg>
                   Trending Now
@@ -92,12 +107,22 @@ const Index = () => {
                 Join our newsletter and receive hand-picked AI prompt templates, tips, and tricks directly to your inbox.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-                <Input 
-                  type="email" 
-                  placeholder="Enter your email" 
-                  className="flex-grow"
-                />
-                <Button>Subscribe</Button>
+                <Suspense fallback={
+                  <div className="w-full flex gap-3">
+                    <div className="skeleton h-10 flex-grow"></div>
+                    <div className="skeleton h-10 w-24"></div>
+                  </div>
+                }>
+                  <div className="flex flex-col sm:flex-row gap-3 w-full">
+                    <Input 
+                      type="email" 
+                      placeholder="Enter your email" 
+                      className="flex-grow"
+                      aria-label="Email address for newsletter"
+                    />
+                    <Button>Subscribe</Button>
+                  </div>
+                </Suspense>
               </div>
             </div>
           </div>
