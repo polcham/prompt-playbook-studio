@@ -3,6 +3,7 @@ import React, { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { DarkModeProvider } from "./contexts/DarkModeContext";
+import { AuthProvider } from "./contexts/AuthContext";
 
 // Lazy load UI components to reduce initial bundle size
 const TooltipProvider = lazy(() => import("@/components/ui/tooltip").then(module => ({ 
@@ -52,50 +53,52 @@ const App = () => (
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <DarkModeProvider>
-        <BrowserRouter>
-          <Suspense fallback={<LoadingFallback />}>
-            <TooltipProvider>
-              <Routes>
-                <Route path="/" element={<Index />} />
+        <AuthProvider>
+          <BrowserRouter>
+            <Suspense fallback={<LoadingFallback />}>
+              <TooltipProvider>
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  
+                  {/* Wrap lazy-loaded routes with Suspense */}
+                  <Route path="*" element={
+                    <Suspense fallback={<LoadingFallback />}>
+                      <NotFound />
+                    </Suspense>
+                  } />
+                  <Route path="/library" element={
+                    <Suspense fallback={<LoadingFallback />}>
+                      <Library />
+                    </Suspense>
+                  } />
+                  <Route path="/prompt/:id" element={
+                    <Suspense fallback={<LoadingFallback />}>
+                      <PromptDetail />
+                    </Suspense>
+                  } />
+                  <Route path="/submit" element={
+                    <Suspense fallback={<LoadingFallback />}>
+                      <Submit />
+                    </Suspense>
+                  } />
+                  <Route path="/login" element={
+                    <Suspense fallback={<LoadingFallback />}>
+                      <Login />
+                    </Suspense>
+                  } />
+                  <Route path="/favorites" element={
+                    <Suspense fallback={<LoadingFallback />}>
+                      <Favorites />
+                    </Suspense>
+                  } />
+                </Routes>
                 
-                {/* Wrap lazy-loaded routes with Suspense */}
-                <Route path="*" element={
-                  <Suspense fallback={<LoadingFallback />}>
-                    <NotFound />
-                  </Suspense>
-                } />
-                <Route path="/library" element={
-                  <Suspense fallback={<LoadingFallback />}>
-                    <Library />
-                  </Suspense>
-                } />
-                <Route path="/prompt/:id" element={
-                  <Suspense fallback={<LoadingFallback />}>
-                    <PromptDetail />
-                  </Suspense>
-                } />
-                <Route path="/submit" element={
-                  <Suspense fallback={<LoadingFallback />}>
-                    <Submit />
-                  </Suspense>
-                } />
-                <Route path="/login" element={
-                  <Suspense fallback={<LoadingFallback />}>
-                    <Login />
-                  </Suspense>
-                } />
-                <Route path="/favorites" element={
-                  <Suspense fallback={<LoadingFallback />}>
-                    <Favorites />
-                  </Suspense>
-                } />
-              </Routes>
-              
-              <Toaster />
-              <Sonner />
-            </TooltipProvider>
-          </Suspense>
-        </BrowserRouter>
+                <Toaster />
+                <Sonner />
+              </TooltipProvider>
+            </Suspense>
+          </BrowserRouter>
+        </AuthProvider>
       </DarkModeProvider>
     </QueryClientProvider>
   </React.StrictMode>

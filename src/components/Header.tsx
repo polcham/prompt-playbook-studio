@@ -1,17 +1,19 @@
 
 import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { Search, Moon, Sun, UserRound, LogIn } from "lucide-react";
+import { Search, Moon, Sun, UserRound, LogIn, Bookmark, LogOut } from "lucide-react";
 import { useDarkMode } from '@/contexts/DarkModeContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { isDarkMode, toggleDarkMode } = useDarkMode();
+  const { user, signOut } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   
-  // Mock authentication state - in a real app, this would come from your auth provider
-  const isLoggedIn = false;
+  const isLoggedIn = !!user;
 
   // Close mobile menu when route changes
   useEffect(() => {
@@ -29,6 +31,11 @@ const Header = () => {
       document.body.style.overflow = '';
     };
   }, [isMobileMenuOpen]);
+  
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/');
+  };
 
   return (
     <header className="border-b py-4" role="banner">
@@ -69,16 +76,22 @@ const Header = () => {
             <span>Search</span>
           </Button>
           {isLoggedIn ? (
-            <Button variant="outline" size="sm" asChild>
-              <Link to="/profile">
-                <UserRound className="h-4 w-4 mr-2" />
-                Profile
-              </Link>
-            </Button>
+            <>
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/favorites" className="flex items-center gap-2">
+                  <Bookmark className="h-4 w-4" />
+                  Favorites
+                </Link>
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleSignOut} className="flex items-center gap-2">
+                <LogOut className="h-4 w-4" />
+                Sign Out
+              </Button>
+            </>
           ) : (
             <Button size="sm" asChild>
-              <Link to="/login">
-                <LogIn className="h-4 w-4 mr-2" />
+              <Link to="/login" className="flex items-center gap-2">
+                <LogIn className="h-4 w-4" />
                 Sign In
               </Link>
             </Button>
@@ -131,6 +144,15 @@ const Header = () => {
             >
               Submit a Prompt
             </Link>
+            {isLoggedIn && (
+              <Link 
+                to="/favorites" 
+                className={`font-medium text-base hover:text-primary transition-colors py-2 ${location.pathname === '/favorites' ? 'text-primary' : ''}`}
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Favorites
+              </Link>
+            )}
             <div className="flex items-center gap-4 pt-4 border-t mt-2">
               <Button 
                 variant="outline" 
@@ -146,9 +168,12 @@ const Header = () => {
             </div>
             <div>
               {isLoggedIn ? (
-                <Button className="w-full mb-3" asChild>
-                  <Link to="/profile" onClick={() => setIsMobileMenuOpen(false)}>Profile</Link>
-                </Button>
+                <>
+                  <Button variant="outline" className="w-full mb-3 flex items-center justify-center gap-2" onClick={handleSignOut}>
+                    <LogOut className="h-4 w-4" />
+                    Sign Out
+                  </Button>
+                </>
               ) : (
                 <Button className="w-full mb-3" asChild>
                   <Link to="/login" onClick={() => setIsMobileMenuOpen(false)}>Sign In</Link>
