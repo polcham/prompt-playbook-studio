@@ -54,6 +54,51 @@ export type Database = {
         }
         Relationships: []
       }
+      prompts: {
+        Row: {
+          author_id: string
+          author_name: string
+          category: string
+          content: string
+          created_at: string
+          description: string
+          id: string
+          is_approved: boolean
+          tags: string[]
+          title: string
+          tool: string
+          updated_at: string
+        }
+        Insert: {
+          author_id: string
+          author_name: string
+          category: string
+          content: string
+          created_at?: string
+          description: string
+          id?: string
+          is_approved?: boolean
+          tags: string[]
+          title: string
+          tool: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string
+          author_name?: string
+          category?: string
+          content?: string
+          created_at?: string
+          description?: string
+          id?: string
+          is_approved?: boolean
+          tags?: string[]
+          title?: string
+          tool?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

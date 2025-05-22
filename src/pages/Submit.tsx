@@ -12,7 +12,9 @@ import { usePlaceholders } from "@/hooks/usePlaceholders";
 import PromptFormFields, { FormValues } from "@/components/submit/PromptFormFields";
 import AuthPrompt from "@/components/AuthPrompt";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const formSchema = z.object({
   title: z.string().min(5, { message: "Title must be at least 5 characters" }),
@@ -24,25 +26,12 @@ const formSchema = z.object({
   tags: z.string(),
 });
 
-// Mock authentication to demonstrate functionality
-// In a real application, this would come from your auth provider
-const mockAuth = {
-  isAuthenticated: false, // Set to false to test the blur effect
-  user: {
-    id: "user-123",
-    name: "John Doe",
-    email: "john@example.com"
-  }
-};
-
 const Submit = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(mockAuth.isAuthenticated);
-  const [showAuthPrompt, setShowAuthPrompt] = useState(!isAuthenticated);
-  
-  // Add console log to verify placeholders hook is initialized correctly
+  const { user, session } = useAuth();
+  const isAuthenticated = !!user;
+  const navigate = useNavigate();
   const placeholdersHook = usePlaceholders();
-  console.log("placeholdersHook in Submit:", placeholdersHook);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -52,19 +41,19 @@ const Submit = () => {
       content: "",
       tool: "chatgpt",
       category: "writing",
-      authorName: isAuthenticated ? mockAuth.user.name : "",
+      authorName: isAuthenticated ? user?.email?.split('@')[0] || "" : "",
       tags: "",
     },
   });
 
   // Update the author name whenever authentication changes
   useEffect(() => {
-    if (isAuthenticated) {
-      form.setValue("authorName", mockAuth.user.name);
+    if (isAuthenticated && user) {
+      form.setValue("authorName", user.email?.split('@')[0] || "");
     }
-  }, [isAuthenticated, form]);
+  }, [isAuthenticated, user, form]);
 
-  const onSubmit = (values: FormValues) => {
+  const onSubmit = async (values: FormValues) => {
     if (!isAuthenticated) {
       toast.error("Please sign in to submit a prompt.");
       return;
@@ -72,19 +61,52 @@ const Submit = () => {
 
     setIsSubmitting(true);
 
-    // In a real app, you would submit to an API
-    setTimeout(() => {
-      console.log(values);
-      toast.success("Your prompt has been submitted for review!");
-      form.reset({
-        ...form.getValues(),
-        title: "",
-        description: "",
-        content: "",
-        tags: "",
-      });
+    try {
+      // Convert comma-separated tags to array
+      const tagsArray = values.tags
+        .split(',')
+        .map(tag => tag.trim())
+        .filter(tag => tag !== "");
+      
+      // Insert prompt into Supabase
+      const { data, error } = await supabase
+        .from('prompts')
+        .insert({
+          title: values.title,
+          description: values.description,
+          content: values.content,
+          tool: values.tool,
+          category: values.category,
+          author_id: user?.id as string,
+          author_name: values.authorName,
+          tags: tagsArray,
+          is_approved: false // Prompts need approval before being publicly visible
+        });
+
+      if (error) {
+        console.error("Error submitting prompt:", error);
+        toast.error("Failed to submit prompt. Please try again.");
+      } else {
+        toast.success("Your prompt has been submitted for review!");
+        form.reset({
+          ...form.getValues(),
+          title: "",
+          description: "",
+          content: "",
+          tags: "",
+        });
+        
+        // Redirect to library after successful submission
+        setTimeout(() => {
+          navigate("/library");
+        }, 1500);
+      }
+    } catch (error) {
+      console.error("Exception submitting prompt:", error);
+      toast.error("An unexpected error occurred. Please try again.");
+    } finally {
       setIsSubmitting(false);
-    }, 1000);
+    }
   };
 
   return (
