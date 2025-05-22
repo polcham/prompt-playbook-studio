@@ -8,7 +8,17 @@ import CategorySidebar from "@/components/CategorySidebar";
 import TagFilter from "@/components/TagFilter";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Prompt, getPromptsByCategory, getPromptsByTool, samplePrompts } from "@/data/prompts";
+import { Prompt } from "@/data/prompts";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 const Library = () => {
   const location = useLocation();
@@ -20,57 +30,126 @@ const Library = () => {
   const [selectedTool, setSelectedTool] = useState(toolParam);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [filteredPrompts, setFilteredPrompts] = useState<Prompt[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
+
+  // Fetch prompts from Supabase
+  const { data: promptsData, isLoading } = useQuery({
+    queryKey: ['prompts', selectedCategory, selectedTool, selectedTags, searchQuery, currentPage],
+    queryFn: async () => {
+      let query = supabase
+        .from('prompts')
+        .select('*')
+        .eq('is_approved', true)
+        .order('created_at', { ascending: false });
+
+      if (selectedCategory !== "all") {
+        query = query.eq('category', selectedCategory);
+      }
+
+      if (selectedTool !== "all") {
+        query = query.eq('tool', selectedTool);
+      }
+
+      if (selectedTags.length > 0) {
+        query = query.contains('tags', selectedTags);
+      }
+
+      if (searchQuery.trim() !== "") {
+        query = query.or(
+          `title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`
+        );
+      }
+
+      // Add pagination
+      const from = (currentPage - 1) * pageSize;
+      const to = from + pageSize - 1;
+      query = query.range(from, to);
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error('Error fetching prompts:', error);
+        throw error;
+      }
+
+      return data as Prompt[];
+    },
+  });
+
+  // Count total prompts for pagination
+  const { data: countData } = useQuery({
+    queryKey: ['promptsCount', selectedCategory, selectedTool, selectedTags, searchQuery],
+    queryFn: async () => {
+      let query = supabase
+        .from('prompts')
+        .select('id', { count: 'exact' })
+        .eq('is_approved', true);
+
+      if (selectedCategory !== "all") {
+        query = query.eq('category', selectedCategory);
+      }
+
+      if (selectedTool !== "all") {
+        query = query.eq('tool', selectedTool);
+      }
+
+      if (selectedTags.length > 0) {
+        query = query.contains('tags', selectedTags);
+      }
+
+      if (searchQuery.trim() !== "") {
+        query = query.or(
+          `title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`
+        );
+      }
+
+      const { count, error } = await query;
+
+      if (error) {
+        console.error('Error counting prompts:', error);
+        throw error;
+      }
+
+      return count || 0;
+    },
+  });
+
+  const totalPages = useMemo(() => {
+    return Math.ceil((countData || 0) / pageSize);
+  }, [countData, pageSize]);
 
   // Extract all unique tags from prompts
-  const allTags = useMemo(() => {
-    const tagSet = new Set<string>();
-    samplePrompts.forEach(prompt => {
-      prompt.tags.forEach(tag => tagSet.add(tag));
-    });
-    return Array.from(tagSet).sort();
-  }, []);
+  const { data: allTags } = useQuery({
+    queryKey: ['promptTags'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('prompts')
+        .select('tags')
+        .eq('is_approved', true);
 
-  useEffect(() => {
-    filterPrompts();
-  }, [selectedCategory, selectedTool, searchQuery, selectedTags]);
+      if (error) {
+        console.error('Error fetching tags:', error);
+        throw error;
+      }
 
-  const filterPrompts = () => {
-    let filtered = [...samplePrompts];
-
-    if (selectedCategory !== "all") {
-      filtered = filtered.filter((prompt) => prompt.category === selectedCategory);
-    }
-
-    if (selectedTool !== "all") {
-      filtered = filtered.filter((prompt) => prompt.tool === selectedTool);
-    }
-
-    if (selectedTags.length > 0) {
-      filtered = filtered.filter((prompt) => 
-        selectedTags.some(tag => prompt.tags.includes(tag))
-      );
-    }
-
-    if (searchQuery.trim() !== "") {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(
-        (prompt) =>
-          prompt.title.toLowerCase().includes(query) ||
-          prompt.description.toLowerCase().includes(query) ||
-          prompt.tags.some((tag) => tag.toLowerCase().includes(query))
-      );
-    }
-
-    setFilteredPrompts(filtered);
-  };
+      const tagSet = new Set<string>();
+      data.forEach(prompt => {
+        prompt.tags.forEach((tag: string) => tagSet.add(tag));
+      });
+      
+      return Array.from(tagSet).sort();
+    },
+  });
 
   const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);
+    setCurrentPage(1);
   };
 
   const handleToolChange = (tool: string) => {
     setSelectedTool(tool);
+    setCurrentPage(1);
   };
 
   const handleTagSelect = (tag: string) => {
@@ -81,10 +160,16 @@ const Library = () => {
         return [...prev, tag];
       }
     });
+    setCurrentPage(1);
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
+    setCurrentPage(1);
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
   };
 
   return (
@@ -123,19 +208,75 @@ const Library = () => {
               
               <div className="mt-8">
                 <TagFilter 
-                  tags={allTags}
+                  tags={allTags || []}
                   selectedTags={selectedTags}
                   onTagSelect={handleTagSelect}
                 />
               </div>
             </div>
             <div className="lg:col-span-3">
-              {filteredPrompts.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {filteredPrompts.map((prompt) => (
-                    <PromptCard key={prompt.id} prompt={prompt} />
-                  ))}
+              {isLoading ? (
+                <div className="text-center py-16">
+                  <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                  <p className="text-muted-foreground">Loading prompts...</p>
                 </div>
+              ) : promptsData && promptsData.length > 0 ? (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    {promptsData.map((prompt) => (
+                      <PromptCard key={prompt.id} prompt={prompt} />
+                    ))}
+                  </div>
+                  
+                  {/* Pagination */}
+                  {totalPages > 1 && (
+                    <Pagination className="mt-8">
+                      <PaginationContent>
+                        <PaginationItem>
+                          <PaginationPrevious 
+                            href="#" 
+                            onClick={(e) => {
+                              e.preventDefault();
+                              if (currentPage > 1) handlePageChange(currentPage - 1);
+                            }}
+                            aria-disabled={currentPage === 1}
+                            className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                          />
+                        </PaginationItem>
+                        
+                        {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                          const pageNum = i + 1;
+                          return (
+                            <PaginationItem key={pageNum}>
+                              <PaginationLink 
+                                href="#" 
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  handlePageChange(pageNum);
+                                }}
+                                isActive={currentPage === pageNum}
+                              >
+                                {pageNum}
+                              </PaginationLink>
+                            </PaginationItem>
+                          );
+                        })}
+                        
+                        <PaginationItem>
+                          <PaginationNext 
+                            href="#" 
+                            onClick={(e) => {
+                              e.preventDefault();
+                              if (currentPage < totalPages) handlePageChange(currentPage + 1);
+                            }}
+                            aria-disabled={currentPage === totalPages}
+                            className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+                          />
+                        </PaginationItem>
+                      </PaginationContent>
+                    </Pagination>
+                  )}
+                </>
               ) : (
                 <div className="text-center py-16">
                   <h3 className="text-xl font-medium mb-2">No prompts found</h3>
