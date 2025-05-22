@@ -1,11 +1,7 @@
-
 import { Link } from 'react-router-dom';
-
 const Footer = () => {
   const currentYear = new Date().getFullYear();
-  
-  return (
-    <footer className="bg-muted py-12">
+  return <footer className="bg-muted py-12">
       <div className="container mx-auto px-4 md:px-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="flex flex-col">
@@ -13,7 +9,7 @@ const Footer = () => {
               <div className="w-10 h-10 rounded-md bg-gradient-to-r from-brand-purple to-brand-pink flex items-center justify-center">
                 <span className="text-white font-bold text-xl">P</span>
               </div>
-              <span className="font-display font-bold text-xl">PromptPlaybook</span>
+              <span className="font-display font-bold text-xl">PromptBook</span>
             </Link>
             <p className="text-sm text-muted-foreground">
               Your go-to library for AI prompt templates. Find, copy, remix, and share prompts for any task.
@@ -71,8 +67,6 @@ const Footer = () => {
           </div>
         </div>
       </div>
-    </footer>
-  );
+    </footer>;
 };
-
 export default Footer;
