@@ -1,3 +1,4 @@
+
 import { Link } from 'react-router-dom';
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -49,7 +50,7 @@ const Footer = () => {
 
         <div className="border-t mt-10 pt-6 flex flex-col md:flex-row justify-between items-center">
           <p className="text-sm text-muted-foreground">
-            © {currentYear} PromptPlaybook. All rights reserved.
+            © {currentYear} PromptBook. All rights reserved.
           </p>
           <div className="flex space-x-6 mt-4 md:mt-0">
             <a href="#" className="text-muted-foreground hover:text-foreground">
