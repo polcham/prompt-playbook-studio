@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import Header from "@/components/Header";
@@ -126,6 +125,9 @@ const Library = () => {
       return count || 0;
     },
   });
+
+  // Calculate total pages based on count data
+  const totalPages = countData ? Math.ceil(countData / pageSize) : 1;
 
   // Extract all unique tags from prompts
   const { data: allTags } = useQuery({

@@ -1,4 +1,3 @@
-
 import { useState, useEffect, lazy, Suspense } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -56,8 +55,7 @@ const Index = () => {
         .select('*')
         .eq('is_approved', true)
         .order('created_at', { ascending: false })
-        .limit(3)
-        .offset(3); // Get a different set than featured
+        .range(3, 5); // Get items 4-6 (use range instead of offset)
 
       if (error) {
         console.error('Error fetching trending prompts:', error);
