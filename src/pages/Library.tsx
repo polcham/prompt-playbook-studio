@@ -73,7 +73,19 @@ const Library = () => {
         throw error;
       }
 
-      return data as Prompt[];
+      // Transform the data to match our Prompt interface
+      return data.map(item => ({
+        id: item.id,
+        title: item.title,
+        description: item.description,
+        content: item.content,
+        tool: item.tool as 'chatgpt' | 'midjourney' | 'claude' | 'dall-e' | 'other',
+        category: item.category,
+        tags: item.tags,
+        authorName: item.author_name, // Map from snake_case to camelCase
+        createdAt: item.created_at,   // Map from snake_case to camelCase
+        likes: 0,                     // Default value since we don't have this in DB yet
+      })) as Prompt[];
     },
   });
 
@@ -114,10 +126,6 @@ const Library = () => {
       return count || 0;
     },
   });
-
-  const totalPages = useMemo(() => {
-    return Math.ceil((countData || 0) / pageSize);
-  }, [countData, pageSize]);
 
   // Extract all unique tags from prompts
   const { data: allTags } = useQuery({

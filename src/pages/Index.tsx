@@ -1,3 +1,4 @@
+
 import { useState, useEffect, lazy, Suspense } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -5,21 +6,83 @@ import { Input } from "@/components/ui/input";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import PromptCard from "@/components/PromptCard";
-import { getFeaturedPrompts, getTrendingPrompts } from "@/data/prompts";
+import { Prompt } from "@/data/prompts";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
 // Lazy load the newsletter form to improve initial page load
 const NewsletterForm = lazy(() => import("@/components/NewsletterForm"));
+
 const Index = () => {
-  const [featuredPrompts, setFeaturedPrompts] = useState([]);
-  const [trendingPrompts, setTrendingPrompts] = useState([]);
-  const [isLoaded, setIsLoaded] = useState(false);
-  useEffect(() => {
-    // Simulate data fetching with priority
-    setFeaturedPrompts(getFeaturedPrompts());
-    setTrendingPrompts(getTrendingPrompts());
-    setIsLoaded(true);
-  }, []);
-  return <div className="flex flex-col min-h-screen">
+  // Fetch featured prompts from Supabase
+  const { data: featuredPrompts = [], isLoading: isFeaturedLoading } = useQuery({
+    queryKey: ['featuredPrompts'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('prompts')
+        .select('*')
+        .eq('is_approved', true)
+        .order('created_at', { ascending: false })
+        .limit(3);
+
+      if (error) {
+        console.error('Error fetching featured prompts:', error);
+        throw error;
+      }
+
+      // Transform the data to match our Prompt interface
+      return data.map(item => ({
+        id: item.id,
+        title: item.title,
+        description: item.description,
+        content: item.content,
+        tool: item.tool as 'chatgpt' | 'midjourney' | 'claude' | 'dall-e' | 'other',
+        category: item.category,
+        tags: item.tags,
+        authorName: item.author_name,
+        createdAt: item.created_at,
+        likes: 0,
+        featured: true // Since we're using these as featured
+      })) as Prompt[];
+    },
+  });
+
+  // Fetch trending prompts from Supabase
+  const { data: trendingPrompts = [], isLoading: isTrendingLoading } = useQuery({
+    queryKey: ['trendingPrompts'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('prompts')
+        .select('*')
+        .eq('is_approved', true)
+        .order('created_at', { ascending: false })
+        .limit(3)
+        .offset(3); // Get a different set than featured
+
+      if (error) {
+        console.error('Error fetching trending prompts:', error);
+        throw error;
+      }
+
+      // Transform the data to match our Prompt interface
+      return data.map(item => ({
+        id: item.id,
+        title: item.title,
+        description: item.description,
+        content: item.content,
+        tool: item.tool as 'chatgpt' | 'midjourney' | 'claude' | 'dall-e' | 'other',
+        category: item.category,
+        tags: item.tags,
+        authorName: item.author_name,
+        createdAt: item.created_at,
+        likes: 0,
+        trending: true // Since we're using these as trending
+      })) as Prompt[];
+    },
+  });
+
+  return (
+    <div className="flex flex-col min-h-screen">
       <Header />
       <main className="flex-grow">
         {/* Hero Section */}
@@ -35,8 +98,7 @@ const Index = () => {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-md mx-auto">
               <Button size="lg" asChild className="flex-1">
-                <Link to="/library">Browse Prompts
-              </Link>
+                <Link to="/library">Browse Prompts</Link>
               </Button>
               <Button size="lg" variant="outline" asChild className="flex-1">
                 <Link to="/submit">Submit a Prompt</Link>
@@ -56,8 +118,20 @@ const Index = () => {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {featuredPrompts.map((prompt, index) => <PromptCard key={prompt.id} prompt={prompt} priority={index < 3} // Prioritize loading for first 3 items
-            />)}
+              {isFeaturedLoading ? (
+                Array.from({ length: 3 }).map((_, index) => (
+                  <div key={index} className="rounded-lg bg-card border p-6 h-64 animate-pulse">
+                    <div className="h-4 bg-muted rounded w-3/4 mb-4"></div>
+                    <div className="h-4 bg-muted rounded w-1/2 mb-8"></div>
+                    <div className="h-4 bg-muted rounded w-full mb-2"></div>
+                    <div className="h-4 bg-muted rounded w-5/6"></div>
+                  </div>
+                ))
+              ) : (
+                featuredPrompts.map((prompt, index) => (
+                  <PromptCard key={prompt.id} prompt={prompt} priority={index < 3} />
+                ))
+              )}
             </div>
           </div>
         </section>
@@ -80,7 +154,18 @@ const Index = () => {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {trendingPrompts.map(prompt => <PromptCard key={prompt.id} prompt={prompt} />)}
+              {isTrendingLoading ? (
+                Array.from({ length: 3 }).map((_, index) => (
+                  <div key={index} className="rounded-lg bg-card border p-6 h-64 animate-pulse">
+                    <div className="h-4 bg-muted rounded w-3/4 mb-4"></div>
+                    <div className="h-4 bg-muted rounded w-1/2 mb-8"></div>
+                    <div className="h-4 bg-muted rounded w-full mb-2"></div>
+                    <div className="h-4 bg-muted rounded w-5/6"></div>
+                  </div>
+                ))
+              ) : (
+                trendingPrompts.map(prompt => <PromptCard key={prompt.id} prompt={prompt} />)
+              )}
             </div>
           </div>
         </section>
@@ -109,6 +194,8 @@ const Index = () => {
         </section>
       </main>
       <Footer />
-    </div>;
+    </div>
+  );
 };
+
 export default Index;
