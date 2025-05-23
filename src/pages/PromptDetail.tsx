@@ -6,7 +6,7 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { getPromptById, getPromptsByCategory, Prompt } from "@/data/prompts";
+import { Prompt, getPromptsByCategory } from "@/data/prompts";
 import { toast } from "sonner";
 import { 
   Heart, 
@@ -22,10 +22,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import AuthPrompt from "@/components/AuthPrompt";
 import { extractPlaceholders, formatPlaceholders } from "@/utils/promptUtils";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
 const PromptDetail = () => {
   const { id } = useParams<{ id: string }>();
-  const [prompt, setPrompt] = useState<Prompt | undefined>(undefined);
   const [relatedPrompts, setRelatedPrompts] = useState<Prompt[]>([]);
   const [copied, setCopied] = useState(false);
   const [placeholders, setPlaceholders] = useState<string[]>([]);
@@ -43,27 +44,89 @@ const PromptDetail = () => {
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
   const [authAction, setAuthAction] = useState<string>("");
 
+  // Fetch prompt data from Supabase
+  const { data: prompt, isLoading, error } = useQuery({
+    queryKey: ['prompt', id],
+    queryFn: async () => {
+      if (!id) return undefined;
+
+      const { data, error } = await supabase
+        .from('prompts')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching prompt:', error);
+        throw error;
+      }
+
+      if (!data) return undefined;
+
+      // Transform the data to match our Prompt interface
+      return {
+        id: data.id,
+        title: data.title,
+        description: data.description,
+        content: data.content,
+        tool: data.tool as 'chatgpt' | 'midjourney' | 'claude' | 'dall-e' | 'other',
+        category: data.category,
+        tags: data.tags,
+        authorName: data.author_name,
+        createdAt: data.created_at,
+        likes: 0, // Default value since we don't have this in DB yet
+      } as Prompt;
+    },
+  });
+
   useEffect(() => {
-    if (id) {
-      const foundPrompt = getPromptById(id);
-      setPrompt(foundPrompt);
+    if (prompt) {
+      // Extract placeholders from the prompt content
+      const extractedPlaceholders = extractPlaceholders(prompt.content);
+      setPlaceholders(extractedPlaceholders);
       
       // Set mock counts
       setLikeCount(Math.floor(Math.random() * 100));
       setCommentCount(Math.floor(Math.random() * 20));
 
-      if (foundPrompt) {
-        // Extract placeholders from the prompt content
-        const extractedPlaceholders = extractPlaceholders(foundPrompt.content);
-        setPlaceholders(extractedPlaceholders);
-        
-        const related = getPromptsByCategory(foundPrompt.category)
-          .filter((p) => p.id !== foundPrompt.id)
-          .slice(0, 3);
-        setRelatedPrompts(related);
-      }
+      // Load related prompts
+      fetchRelatedPrompts(prompt.category);
     }
-  }, [id]);
+  }, [prompt]);
+
+  // Fetch related prompts from Supabase
+  const fetchRelatedPrompts = async (category: string) => {
+    if (!id || !category) return;
+
+    const { data, error } = await supabase
+      .from('prompts')
+      .select('*')
+      .eq('category', category)
+      .neq('id', id) // Exclude current prompt
+      .eq('is_approved', true)
+      .limit(3);
+
+    if (error) {
+      console.error('Error fetching related prompts:', error);
+      return;
+    }
+
+    // Transform the data to match our Prompt interface
+    const relatedPromptsData = data.map(item => ({
+      id: item.id,
+      title: item.title,
+      description: item.description,
+      content: item.content,
+      tool: item.tool as 'chatgpt' | 'midjourney' | 'claude' | 'dall-e' | 'other',
+      category: item.category,
+      tags: item.tags,
+      authorName: item.author_name,
+      createdAt: item.created_at,
+      likes: 0,
+    })) as Prompt[];
+
+    setRelatedPrompts(relatedPromptsData);
+  };
 
   const handleCopy = () => {
     if (prompt) {
@@ -143,7 +206,22 @@ const PromptDetail = () => {
     return labels[tool] || "AI Tool";
   };
 
-  if (!prompt) {
+  if (isLoading) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <Header />
+        <main className="flex-grow py-16 container mx-auto px-4">
+          <div className="text-center">
+            <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading prompt details...</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (error || !prompt) {
     return (
       <div className="flex flex-col min-h-screen">
         <Header />
@@ -175,8 +253,10 @@ const PromptDetail = () => {
             </Link>
           </div>
 
+          {/* Main content */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2">
+              {/* Prompt header */}
               <div className="mb-6">
                 <div className="flex items-center gap-3 mb-2">
                   <Badge>{getToolLabel(prompt.tool)}</Badge>
@@ -225,6 +305,7 @@ const PromptDetail = () => {
                 </div>
               </div>
 
+              {/* Prompt content */}
               <Card className="mb-8">
                 <CardContent className="pt-6">
                   <div className="flex justify-between items-center mb-4">
@@ -265,7 +346,8 @@ const PromptDetail = () => {
                   )}
                 </CardContent>
               </Card>
-              
+
+              {/* How to use */}
               <div className="mb-8">
                 <h3 className="text-xl font-semibold mb-4">How to use this prompt</h3>
                 <div className="space-y-4">
@@ -292,7 +374,7 @@ const PromptDetail = () => {
                 </div>
               </div>
               
-              {/* Comments section - now positioned after "How to use this prompt" */}
+              {/* Comments section */}
               <div className="mb-8 relative">
                 <h3 className="text-xl font-semibold mb-4">Comments</h3>
                 
@@ -338,6 +420,7 @@ const PromptDetail = () => {
               </div>
             </div>
 
+            {/* Sidebar */}
             <div className="lg:col-span-1">
               <div className="sticky top-4">
                 <div className="bg-muted/50 p-6 rounded-lg border mb-8">
@@ -357,7 +440,7 @@ const PromptDetail = () => {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Date</span>
-                      <span className="font-medium">{prompt.createdAt}</span>
+                      <span className="font-medium">{new Date(prompt.createdAt).toLocaleDateString()}</span>
                     </div>
                   </div>
                 </div>
