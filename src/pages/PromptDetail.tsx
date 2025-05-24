@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import Header from "@/components/Header";
@@ -8,14 +7,14 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Prompt, getPromptsByCategory } from "@/data/prompts";
 import { toast } from "sonner";
-import { 
-  Heart, 
-  MessageSquare, 
-  Share, 
+import {
+  Heart,
+  MessageSquare,
+  Share,
   Bookmark,
   BookmarkPlus,
   LogIn,
-  FileText
+  FileText,
 } from "lucide-react";
 import CommentSection from "@/components/CommentSection";
 import { Textarea } from "@/components/ui/textarea";
@@ -30,10 +29,10 @@ const PromptDetail = () => {
   const [relatedPrompts, setRelatedPrompts] = useState<Prompt[]>([]);
   const [copied, setCopied] = useState(false);
   const [placeholders, setPlaceholders] = useState<string[]>([]);
-  
+
   // Mock authentication state - in a real app, this would come from your auth provider
   const isLoggedIn = false;
-  
+
   // State for social features
   const [isLiked, setIsLiked] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
@@ -45,19 +44,23 @@ const PromptDetail = () => {
   const [authAction, setAuthAction] = useState<string>("");
 
   // Fetch prompt data from Supabase
-  const { data: prompt, isLoading, error } = useQuery({
-    queryKey: ['prompt', id],
+  const {
+    data: prompt,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["prompt", id],
     queryFn: async () => {
       if (!id) return undefined;
 
       const { data, error } = await supabase
-        .from('prompts')
-        .select('*')
-        .eq('id', id)
+        .from("prompts")
+        .select("*")
+        .eq("id", id)
         .single();
 
       if (error) {
-        console.error('Error fetching prompt:', error);
+        console.error("Error fetching prompt:", error);
         throw error;
       }
 
@@ -69,7 +72,12 @@ const PromptDetail = () => {
         title: data.title,
         description: data.description,
         content: data.content,
-        tool: data.tool as 'chatgpt' | 'midjourney' | 'claude' | 'dall-e' | 'other',
+        tool: data.tool as
+          | "chatgpt"
+          | "midjourney"
+          | "claude"
+          | "dall-e"
+          | "other",
         category: data.category,
         tags: data.tags,
         authorName: data.author_name,
@@ -84,7 +92,7 @@ const PromptDetail = () => {
       // Extract placeholders from the prompt content
       const extractedPlaceholders = extractPlaceholders(prompt.content);
       setPlaceholders(extractedPlaceholders);
-      
+
       // Set mock counts
       setLikeCount(Math.floor(Math.random() * 100));
       setCommentCount(Math.floor(Math.random() * 20));
@@ -99,25 +107,30 @@ const PromptDetail = () => {
     if (!id || !category) return;
 
     const { data, error } = await supabase
-      .from('prompts')
-      .select('*')
-      .eq('category', category)
-      .neq('id', id) // Exclude current prompt
-      .eq('is_approved', true)
+      .from("prompts")
+      .select("*")
+      .eq("category", category)
+      .neq("id", id) // Exclude current prompt
+      .eq("is_approved", true)
       .limit(3);
 
     if (error) {
-      console.error('Error fetching related prompts:', error);
+      console.error("Error fetching related prompts:", error);
       return;
     }
 
     // Transform the data to match our Prompt interface
-    const relatedPromptsData = data.map(item => ({
+    const relatedPromptsData = data.map((item) => ({
       id: item.id,
       title: item.title,
       description: item.description,
       content: item.content,
-      tool: item.tool as 'chatgpt' | 'midjourney' | 'claude' | 'dall-e' | 'other',
+      tool: item.tool as
+        | "chatgpt"
+        | "midjourney"
+        | "claude"
+        | "dall-e"
+        | "other",
       category: item.category,
       tags: item.tags,
       authorName: item.author_name,
@@ -136,43 +149,46 @@ const PromptDetail = () => {
       setTimeout(() => setCopied(false), 2000);
     }
   };
-  
+
   const handleShare = () => {
     if (navigator.share && prompt) {
-      navigator.share({
-        title: prompt.title,
-        text: `Check out this ${prompt.tool} prompt: ${prompt.title}`,
-        url: window.location.href,
-      })
-      .then(() => toast.success("Shared successfully!"))
-      .catch((error) => console.log('Error sharing', error));
+      navigator
+        .share({
+          title: prompt.title,
+          text: `Check out this ${prompt.tool.toUpperCase()} prompt: ${
+            prompt.title
+          }`,
+          url: window.location.href,
+        })
+        .then(() => toast.success("Shared successfully!"))
+        .catch((error) => console.log("Error sharing", error));
     } else {
       navigator.clipboard.writeText(window.location.href);
       toast.success("Link copied to clipboard!");
     }
   };
-  
+
   const handleLike = () => {
     if (!isLoggedIn) {
       setAuthAction("like prompts");
       setShowAuthPrompt(true);
       return;
     }
-    
+
     setIsLiked(!isLiked);
     setLikeCount(isLiked ? likeCount - 1 : likeCount + 1);
     if (!isLiked) {
       toast.success("Added to liked prompts!");
     }
   };
-  
+
   const handleFavorite = () => {
     if (!isLoggedIn) {
       setAuthAction("add prompts to favorites");
       setShowAuthPrompt(true);
       return;
     }
-    
+
     setIsFavorite(!isFavorite);
     if (!isFavorite) {
       toast.success("Added to favorites!");
@@ -180,14 +196,14 @@ const PromptDetail = () => {
       toast.success("Removed from favorites!");
     }
   };
-  
+
   const handleCommentSubmit = () => {
     if (!isLoggedIn) {
       setAuthAction("comment on prompts");
       setShowAuthPrompt(true);
       return;
     }
-    
+
     if (newComment.trim()) {
       setCommentCount(commentCount + 1);
       toast.success("Comment added!");
@@ -247,8 +263,25 @@ const PromptDetail = () => {
       <main className="flex-grow py-8 px-4">
         <div className="container mx-auto">
           <div className="mb-8">
-            <Link to="/library" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-arrow-left"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+            <Link
+              to="/library"
+              className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="lucide lucide-arrow-left"
+              >
+                <path d="m12 19-7-7 7-7" />
+                <path d="M19 12H5" />
+              </svg>
               Back to Library
             </Link>
           </div>
@@ -262,30 +295,38 @@ const PromptDetail = () => {
                   <Badge>{getToolLabel(prompt.tool)}</Badge>
                   <Badge variant="outline">{prompt.category}</Badge>
                 </div>
-                <h1 className="text-3xl md:text-4xl font-bold mb-2">{prompt.title}</h1>
+                <h1 className="text-3xl md:text-4xl font-bold mb-2">
+                  {prompt.title}
+                </h1>
                 <p className="text-muted-foreground">{prompt.description}</p>
-                
+
                 {/* Social actions */}
                 <div className="flex items-center gap-4 mt-4">
-                  <button 
+                  <button
                     onClick={handleLike}
-                    className={`flex items-center gap-1 text-sm ${isLiked ? 'text-red-500' : 'text-muted-foreground'} hover:text-red-500 transition-colors`}
+                    className={`flex items-center gap-1 text-sm ${
+                      isLiked ? "text-red-500" : "text-muted-foreground"
+                    } hover:text-red-500 transition-colors`}
                   >
-                    <Heart className={`h-4 w-4 ${isLiked ? 'fill-current' : ''}`} /> 
+                    <Heart
+                      className={`h-4 w-4 ${isLiked ? "fill-current" : ""}`}
+                    />
                     <span>{likeCount}</span>
                   </button>
-                  
-                  <button 
+
+                  <button
                     onClick={() => setShowComments(!showComments)}
                     className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors"
                   >
-                    <MessageSquare className="h-4 w-4" /> 
+                    <MessageSquare className="h-4 w-4" />
                     <span>{commentCount}</span>
                   </button>
-                  
-                  <button 
+
+                  <button
                     onClick={handleFavorite}
-                    className={`flex items-center gap-1 text-sm ${isFavorite ? 'text-yellow-500' : 'text-muted-foreground'} hover:text-yellow-500 transition-colors`}
+                    className={`flex items-center gap-1 text-sm ${
+                      isFavorite ? "text-yellow-500" : "text-muted-foreground"
+                    } hover:text-yellow-500 transition-colors`}
                   >
                     {isFavorite ? (
                       <Bookmark className="h-4 w-4 fill-current" />
@@ -294,8 +335,8 @@ const PromptDetail = () => {
                     )}
                     <span>Favorite</span>
                   </button>
-                  
-                  <button 
+
+                  <button
                     onClick={handleShare}
                     className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors ml-auto"
                   >
@@ -310,20 +351,54 @@ const PromptDetail = () => {
                 <CardContent className="pt-6">
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="font-medium">Prompt Template</h3>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
+                    <Button
+                      variant="outline"
+                      size="sm"
                       onClick={handleCopy}
                       className="gap-2"
                     >
                       {copied ? (
                         <>
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-check"><path d="M20 6 9 17l-5-5"/></svg>
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="lucide lucide-check"
+                          >
+                            <path d="M20 6 9 17l-5-5" />
+                          </svg>
                           Copied!
                         </>
                       ) : (
                         <>
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-copy"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="lucide lucide-copy"
+                          >
+                            <rect
+                              width="14"
+                              height="14"
+                              x="8"
+                              y="8"
+                              rx="2"
+                              ry="2"
+                            />
+                            <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+                          </svg>
                           Copy
                         </>
                       )}
@@ -332,7 +407,7 @@ const PromptDetail = () => {
                   <div className="bg-muted p-4 rounded-md font-mono text-sm whitespace-pre-wrap">
                     {prompt.content}
                   </div>
-                  
+
                   {placeholders.length > 0 && (
                     <div className="mt-4 p-3 bg-muted/50 rounded-md border">
                       <div className="flex items-center gap-2 mb-1">
@@ -349,46 +424,55 @@ const PromptDetail = () => {
 
               {/* How to use */}
               <div className="mb-8">
-                <h3 className="text-xl font-semibold mb-4">How to use this prompt</h3>
+                <h3 className="text-xl font-semibold mb-4">
+                  How to use this prompt
+                </h3>
                 <div className="space-y-4">
                   <div className="bg-muted/50 p-4 rounded-md border">
                     <h4 className="font-medium mb-2">1. Copy the template</h4>
                     <p className="text-sm text-muted-foreground">
-                      Click the "Copy" button above to copy the entire prompt template to your clipboard.
+                      Click the "Copy" button above to copy the entire prompt
+                      template to your clipboard.
                     </p>
                   </div>
-                  
+
                   <div className="bg-muted/50 p-4 rounded-md border">
-                    <h4 className="font-medium mb-2">2. Fill in your specifics</h4>
+                    <h4 className="font-medium mb-2">
+                      2. Fill in your specifics
+                    </h4>
                     <p className="text-sm text-muted-foreground">
-                      Replace the placeholder text (typically in [BRACKETS]) with your specific information.
+                      Replace the placeholder text (typically in [BRACKETS])
+                      with your specific information.
                     </p>
                   </div>
-                  
+
                   <div className="bg-muted/50 p-4 rounded-md border">
-                    <h4 className="font-medium mb-2">3. Paste into your AI tool</h4>
+                    <h4 className="font-medium mb-2">
+                      3. Paste into your AI tool
+                    </h4>
                     <p className="text-sm text-muted-foreground">
-                      Paste the completed prompt into {getToolLabel(prompt.tool)} and let the AI work its magic.
+                      Paste the completed prompt into{" "}
+                      {getToolLabel(prompt.tool)} and let the AI work its magic.
                     </p>
                   </div>
                 </div>
               </div>
-              
+
               {/* Comments section */}
               <div className="mb-8 relative">
                 <h3 className="text-xl font-semibold mb-4">Comments</h3>
-                
-                <div className={`${!isLoggedIn ? 'opacity-50' : ''}`}>
+
+                <div className={`${!isLoggedIn ? "opacity-50" : ""}`}>
                   <div className="mb-4">
-                    <Textarea 
-                      placeholder="Add a comment..." 
+                    <Textarea
+                      placeholder="Add a comment..."
                       value={newComment}
                       onChange={(e) => setNewComment(e.target.value)}
                       className="mb-2"
                       disabled={!isLoggedIn}
                     />
                     <div className="flex justify-end">
-                      <Button 
+                      <Button
                         onClick={handleCommentSubmit}
                         disabled={!newComment.trim() || !isLoggedIn}
                       >
@@ -396,20 +480,23 @@ const PromptDetail = () => {
                       </Button>
                     </div>
                   </div>
-                  
+
                   <ScrollArea className="h-[300px]">
                     <CommentSection promptId={prompt.id} />
                   </ScrollArea>
                 </div>
-                
+
                 {/* Overlay for non-logged-in users */}
                 {!isLoggedIn && (
                   <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm rounded-md">
                     <div className="text-center p-6 max-w-md">
                       <LogIn className="h-10 w-10 mx-auto mb-4 text-primary" />
-                      <h4 className="text-lg font-medium mb-2">Sign in to join the conversation</h4>
+                      <h4 className="text-lg font-medium mb-2">
+                        Sign in to join the conversation
+                      </h4>
                       <p className="text-sm text-muted-foreground mb-4">
-                        You need to be signed in to comment on prompts and engage with the community.
+                        You need to be signed in to comment on prompts and
+                        engage with the community.
                       </p>
                       <Button asChild>
                         <Link to="/login">Sign In</Link>
@@ -423,16 +510,20 @@ const PromptDetail = () => {
             {/* Sidebar */}
             <div className="lg:col-span-1">
               <div className="sticky top-4">
-                <div className="bg-muted/50 p-6 rounded-lg border mb-8">
+                {/* <div className="bg-muted/50 p-6 rounded-lg border mb-8">
                   <h3 className="font-semibold mb-4">Prompt Details</h3>
                   <div className="space-y-3 text-sm">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Tool</span>
-                      <span className="font-medium">{getToolLabel(prompt.tool)}</span>
+                      <span className="font-medium">
+                        {getToolLabel(prompt.tool)}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Category</span>
-                      <span className="font-medium capitalize">{prompt.category}</span>
+                      <span className="font-medium capitalize">
+                        {prompt.category}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Created by</span>
@@ -440,10 +531,12 @@ const PromptDetail = () => {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Date</span>
-                      <span className="font-medium">{new Date(prompt.createdAt).toLocaleDateString()}</span>
+                      <span className="font-medium">
+                        {new Date(prompt.createdAt).toLocaleDateString()}
+                      </span>
                     </div>
                   </div>
-                </div>
+                </div> */}
 
                 {relatedPrompts.length > 0 && (
                   <div>
@@ -452,7 +545,9 @@ const PromptDetail = () => {
                       {relatedPrompts.map((related) => (
                         <Link to={`/prompt/${related.id}`} key={related.id}>
                           <div className="p-3 border rounded-lg hover:bg-muted/50 transition-colors">
-                            <h4 className="font-medium mb-1">{related.title}</h4>
+                            <h4 className="font-medium mb-1">
+                              {related.title}
+                            </h4>
                             <p className="text-sm text-muted-foreground line-clamp-2">
                               {related.description}
                             </p>
@@ -468,10 +563,10 @@ const PromptDetail = () => {
         </div>
       </main>
       <Footer />
-      
+
       {/* Auth prompt dialog */}
-      <AuthPrompt 
-        isOpen={showAuthPrompt} 
+      <AuthPrompt
+        isOpen={showAuthPrompt}
         onClose={() => setShowAuthPrompt(false)}
         action={authAction}
       />
