@@ -1,29 +1,71 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import PromptCard from "@/components/PromptCard";
-import { getFeaturedPrompts, Prompt } from "@/data/prompts";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { LogIn } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Prompt } from "@/data/prompts";
 
 const Favorites = () => {
-  const [favoritePrompts, setFavoritePrompts] = useState<Prompt[]>([]);
-  const [loading, setLoading] = useState(true);
-  
-  // Mock authentication state - in a real app, this would come from your auth provider
-  const isLoggedIn = false;
+  const { user, loading: authLoading } = useAuth();
+  const isLoggedIn = !!user;
 
-  useEffect(() => {
-    // Mock API call to load favorites
-    setTimeout(() => {
-      // If not logged in, we'll have an empty list
-      // Otherwise we'd load from an API
-      const prompts = isLoggedIn ? getFeaturedPrompts().slice(0, 6) : [];
-      setFavoritePrompts(prompts);
-      setLoading(false);
-    }, 500);
-  }, [isLoggedIn]);
+  // Fetch user's favorites from Supabase
+  const { data: favoritePrompts = [], isLoading: favoritesLoading } = useQuery({
+    queryKey: ['favorites', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      
+      // First get favorite prompt IDs
+      const { data: favorites, error: favoritesError } = await supabase
+        .from('favorites')
+        .select('prompt_id')
+        .eq('user_id', user.id);
+      
+      if (favoritesError) {
+        console.error('Error fetching favorites:', favoritesError);
+        return [];
+      }
+      
+      if (!favorites || favorites.length === 0) {
+        return [];
+      }
+      
+      // Then get the prompts for those IDs
+      const promptIds = favorites.map(fav => fav.prompt_id);
+      const { data: prompts, error: promptsError } = await supabase
+        .from('prompts')
+        .select('*')
+        .in('id', promptIds);
+      
+      if (promptsError) {
+        console.error('Error fetching prompts:', promptsError);
+        return [];
+      }
+      
+      // Transform the data to match Prompt interface
+      return prompts?.map(prompt => ({
+        id: prompt.id,
+        title: prompt.title,
+        description: prompt.description,
+        content: prompt.content,
+        tool: prompt.tool as "chatgpt" | "midjourney" | "claude" | "dall-e" | "other",
+        category: prompt.category,
+        tags: prompt.tags,
+        authorName: prompt.author_name,
+        trending: false,
+        createdAt: prompt.created_at,
+        likes: 0
+      })) || [];
+    },
+    enabled: !!user
+  });
+
+  const loading = authLoading || favoritesLoading;
 
   if (!isLoggedIn) {
     return (
