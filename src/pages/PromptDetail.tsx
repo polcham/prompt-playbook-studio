@@ -315,7 +315,16 @@ const PromptDetail = () => {
                   </button>
 
                   <button
-                    onClick={() => setShowComments(!showComments)}
+                    onClick={() => {
+                      setShowComments(!showComments);
+                      // Scroll to comments section after a brief delay to ensure it's rendered
+                      setTimeout(() => {
+                        const commentsSection = document.getElementById('comments-section');
+                        if (commentsSection) {
+                          commentsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }
+                      }, 100);
+                    }}
                     className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors"
                   >
                     <MessageSquare className="h-4 w-4" />
@@ -459,7 +468,7 @@ const PromptDetail = () => {
               </div>
 
               {/* Comments section */}
-              <div className="mb-8 relative">
+              <div id="comments-section" className="mb-8 relative">
                 <h3 className="text-xl font-semibold mb-4">Comments</h3>
 
                 <div className={`${!isLoggedIn ? "opacity-50" : ""}`}>

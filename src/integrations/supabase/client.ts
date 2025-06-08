@@ -13,6 +13,18 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
   auth: {
     persistSession: true,
     autoRefreshToken: true,
-    storage: localStorage
+    storage: localStorage,
+    storageKey: 'supabase.auth.token',
+    flowType: 'pkce'
+  },
+  global: {
+    headers: {
+      'x-application-name': 'prompt-library'
+    }
+  },
+  realtime: {
+    params: {
+      eventsPerSecond: 2
+    }
   }
 });
