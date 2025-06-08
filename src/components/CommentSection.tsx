@@ -1,5 +1,7 @@
 
-import { useEffect, useState } from 'react';
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
+import { formatDistanceToNow } from "date-fns";
 
 interface Comment {
   id: string;
@@ -14,40 +16,36 @@ interface CommentSectionProps {
 }
 
 const CommentSection = ({ promptId }: CommentSectionProps) => {
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Mock API call to fetch comments
-    setTimeout(() => {
-      const mockComments: Comment[] = [
-        {
-          id: '1',
-          userName: 'Alice Johnson',
-          content: 'This prompt works amazingly well with GPT-4! I was able to generate a detailed business plan in minutes.',
-          createdAt: '2 days ago',
-          avatarUrl: 'https://i.pravatar.cc/40?img=1',
-        },
-        {
-          id: '2',
-          userName: 'Mark Wilson',
-          content: 'I made a few tweaks to the prompt by adding more specific details about my industry, and it produced even better results.',
-          createdAt: '1 week ago',
-          avatarUrl: 'https://i.pravatar.cc/40?img=2',
-        },
-        {
-          id: '3',
-          userName: 'Sophie Taylor',
-          content: 'Has anyone tried this with Claude? Curious if it works as well there.',
-          createdAt: '2 weeks ago',
-          avatarUrl: 'https://i.pravatar.cc/40?img=3',
-        },
-      ];
+  // Fetch comments from Supabase
+  const { data: comments = [], isLoading: loading } = useQuery({
+    queryKey: ['comments', promptId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('comments')
+        .select(`
+          id,
+          content,
+          created_at,
+          user_id
+        `)
+        .eq('prompt_id', promptId)
+        .order('created_at', { ascending: false });
       
-      setComments(mockComments);
-      setLoading(false);
-    }, 500);
-  }, [promptId]);
+      if (error) {
+        console.error('Error fetching comments:', error);
+        return [];
+      }
+      
+      // For now, we'll use mock usernames and avatars since we don't have user profiles yet
+      return data?.map((comment, index) => ({
+        id: comment.id,
+        userName: `User ${comment.user_id.slice(0, 8)}`,
+        content: comment.content,
+        createdAt: formatDistanceToNow(new Date(comment.created_at), { addSuffix: true }),
+        avatarUrl: `https://i.pravatar.cc/40?img=${(index % 70) + 1}`,
+      })) || [];
+    },
+  });
 
   if (loading) {
     return (

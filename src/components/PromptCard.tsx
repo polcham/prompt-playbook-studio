@@ -27,9 +27,46 @@ const PromptCard = ({ prompt, priority = false }: PromptCardProps) => {
   
   const isLoggedIn = !!user;
   
-  // Mock social stats - would come from the database in a real app
-  const likeCount = Math.floor(Math.random() * 100);
-  const commentCount = Math.floor(Math.random() * 20);
+  // Fetch like and comment counts
+  const { data: likeCount = 0 } = useQuery({
+    queryKey: ['likes', prompt.id],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from('likes')
+        .select('*', { count: 'exact', head: true })
+        .eq('prompt_id', prompt.id);
+      return count || 0;
+    }
+  });
+
+  const { data: commentCount = 0 } = useQuery({
+    queryKey: ['comments', prompt.id],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from('comments')
+        .select('*', { count: 'exact', head: true })
+        .eq('prompt_id', prompt.id);
+      return count || 0;
+    }
+  });
+
+  // Check if user has liked this prompt
+  const { data: isLiked = false } = useQuery({
+    queryKey: ['like', prompt.id, user?.id],
+    queryFn: async () => {
+      if (!user) return false;
+      
+      const { data } = await supabase
+        .from('likes')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('prompt_id', prompt.id)
+        .single();
+        
+      return !!data;
+    },
+    enabled: !!user
+  });
   
   // Check if prompt is in favorites
   const { data: isFavorite = false } = useQuery({
@@ -103,6 +140,37 @@ const PromptCard = ({ prompt, priority = false }: PromptCardProps) => {
     setTimeout(() => setCopied(false), 2000);
   };
   
+  // Like/unlike mutation
+  const likeMutation = useMutation({
+    mutationFn: async () => {
+      if (!user) throw new Error("User not authenticated");
+      
+      if (isLiked) {
+        return await supabase
+          .from('likes')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('prompt_id', prompt.id);
+      } else {
+        return await supabase
+          .from('likes')
+          .insert({
+            user_id: user.id,
+            prompt_id: prompt.id
+          });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['like', prompt.id, user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['likes', prompt.id] });
+      toast.success(isLiked ? "Removed like" : "Liked!");
+    },
+    onError: (error) => {
+      toast.error("Failed to update like");
+      console.error("Like error:", error);
+    }
+  });
+
   const handleLike = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -113,7 +181,7 @@ const PromptCard = ({ prompt, priority = false }: PromptCardProps) => {
       return;
     }
     
-    toast.success("Prompt liked!");
+    likeMutation.mutate();
   };
   
   const handleFavorite = (e: React.MouseEvent) => {
@@ -182,10 +250,13 @@ const PromptCard = ({ prompt, priority = false }: PromptCardProps) => {
           <div className="flex items-center gap-3 text-muted-foreground text-xs">
             <button 
               onClick={handleLike} 
-              className="flex items-center gap-1 hover:text-primary transition-colors"
+              className={cn(
+                "flex items-center gap-1 transition-colors",
+                isLiked ? "text-red-500" : "hover:text-primary"
+              )}
               aria-label={`Like this prompt (${likeCount} likes)`}
             >
-              <Heart className="h-3 w-3" aria-hidden="true" />
+              <Heart className={cn("h-3 w-3", isLiked && "fill-current")} aria-hidden="true" />
               <span>{likeCount}</span>
             </button>
             
