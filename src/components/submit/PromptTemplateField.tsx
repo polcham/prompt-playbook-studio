@@ -1,4 +1,3 @@
-
 import React, { useRef, useState, useCallback, useEffect } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -19,19 +18,24 @@ interface PromptTemplateFieldProps {
   placeholdersHook: UsePlaceholdersReturn;
 }
 
-const PromptTemplateField = ({ form, placeholdersHook }: PromptTemplateFieldProps) => {
+const PromptTemplateField = ({
+  form,
+  placeholdersHook,
+}: PromptTemplateFieldProps) => {
   // Add a console log to check the value of placeholdersHook
   console.log("placeholdersHook in PromptTemplateField:", placeholdersHook);
 
   const [placeholderCommandOpen, setPlaceholderCommandOpen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const [textAreaCursorPosition, setTextAreaCursorPosition] = useState<number | null>(null);
+  const [textAreaCursorPosition, setTextAreaCursorPosition] = useState<
+    number | null
+  >(null);
 
   const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value;
     const cursorPos = e.target.selectionStart;
     setTextAreaCursorPosition(cursorPos);
-    
+
     form.setValue("content", value);
 
     // Check if the last character typed is "/"
@@ -43,16 +47,16 @@ const PromptTemplateField = ({ form, placeholdersHook }: PromptTemplateFieldProp
   const handlePlaceholderSelect = (placeholder: string) => {
     const currentContent = form.getValues("content");
     const cursorPos = textAreaCursorPosition || 0;
-    
+
     // Insert the placeholder at the cursor position, replacing the "/"
-    const newContent = 
-      currentContent.substring(0, cursorPos - 1) + 
-      `[${placeholder}]` + 
+    const newContent =
+      currentContent.substring(0, cursorPos - 1) +
+      `[${placeholder}]` +
       currentContent.substring(cursorPos);
-    
+
     form.setValue("content", newContent);
     setPlaceholderCommandOpen(false);
-    
+
     // Set focus back to the textarea and set cursor position after the inserted placeholder
     setTimeout(() => {
       if (textareaRef.current) {
@@ -74,13 +78,13 @@ const PromptTemplateField = ({ form, placeholdersHook }: PromptTemplateFieldProp
           <FormControl>
             <div className="relative">
               <Textarea
-                placeholder="Paste your full prompt template here. Use [PLACEHOLDERS] for customizable parts."
+                placeholder="The complete prompt template with placeholders in [BRACKETS] for customizable parts. Type / to insert placeholder."
                 className="min-h-[200px] font-mono"
                 onChange={handleContentChange}
                 ref={textareaRef}
                 {...fieldProps}
               />
-              
+
               {/* Only render the PlaceholderSelector if placeholdersHook is defined */}
               {placeholdersHook && (
                 <PlaceholderSelector
@@ -92,9 +96,9 @@ const PromptTemplateField = ({ form, placeholdersHook }: PromptTemplateFieldProp
               )}
             </div>
           </FormControl>
-          <FormDescription>
+          {/* <FormDescription>
             The complete prompt template with placeholders in [BRACKETS] for customizable parts. Type / to insert placeholder.
-          </FormDescription>
+          </FormDescription> */}
           <FormMessage />
         </FormItem>
       )}

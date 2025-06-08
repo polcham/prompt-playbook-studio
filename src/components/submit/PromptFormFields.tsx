@@ -1,4 +1,3 @@
-
 import React from "react";
 import {
   FormField,
@@ -36,7 +35,7 @@ interface PromptFormFieldsProps {
   form: UseFormReturn<FormValues>;
   isSubmitting: boolean;
   placeholdersHook: UsePlaceholdersReturn;
-  hideAuthorField?: boolean; 
+  hideAuthorField?: boolean;
 }
 
 const PromptFormFields = ({
@@ -71,7 +70,10 @@ const PromptFormFields = ({
           <FormItem>
             <FormLabel>Short Description</FormLabel>
             <FormControl>
-              <Input placeholder="Briefly describe what this prompt does" {...field} />
+              <Input
+                placeholder="Briefly describe what this prompt does"
+                {...field}
+              />
             </FormControl>
             <FormDescription>
               A short description that will appear in prompt cards.
@@ -88,10 +90,7 @@ const PromptFormFields = ({
           render={({ field }) => (
             <FormItem>
               <FormLabel>AI Tool</FormLabel>
-              <Select
-                onValueChange={field.onChange}
-                defaultValue={field.value}
-              >
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select an AI tool" />
@@ -119,10 +118,7 @@ const PromptFormFields = ({
           render={({ field }) => (
             <FormItem>
               <FormLabel>Category</FormLabel>
-              <Select
-                onValueChange={field.onChange}
-                defaultValue={field.value}
-              >
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a category" />
@@ -145,10 +141,7 @@ const PromptFormFields = ({
         />
       </div>
 
-      <PromptTemplateField 
-        form={form} 
-        placeholdersHook={placeholdersHook} 
-      />
+      <PromptTemplateField form={form} placeholdersHook={placeholdersHook} />
 
       <FormField
         control={form.control}
@@ -157,10 +150,14 @@ const PromptFormFields = ({
           <FormItem>
             <FormLabel>Tags</FormLabel>
             <FormControl>
-              <Input placeholder="E.g., copywriting, SEO, marketing (comma separated)" {...field} />
+              <Input
+                placeholder="E.g., copywriting, SEO, marketing (comma separated)"
+                {...field}
+              />
             </FormControl>
             <FormDescription>
-              Add relevant tags to help others find your prompt (comma separated).
+              Add relevant tags to help others find your prompt (comma
+              separated).
             </FormDescription>
             <FormMessage />
           </FormItem>
@@ -188,7 +185,7 @@ const PromptFormFields = ({
       )}
 
       <Button type="submit" className="w-full" disabled={isSubmitting}>
-        {isSubmitting ? "Submitting..." : "Submit Prompt for Review"}
+        {isSubmitting ? "Submitting..." : "Submit Prompt"}
       </Button>
     </>
   );
