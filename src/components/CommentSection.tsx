@@ -81,7 +81,7 @@ const CommentSection = ({ promptId }: CommentSectionProps) => {
 
   return (
     <div className="space-y-6">
-      {comments.map((comment) => {
+      {Array.isArray(comments) && comments.map((comment) => {
         const profile = comment.profiles;
         const displayName = profile?.username || `User ${comment.user_id.slice(0, 8)}`;
         const avatarUrl = profile?.avatar_url;
