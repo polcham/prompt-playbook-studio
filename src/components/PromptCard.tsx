@@ -28,7 +28,7 @@ const PromptCard = ({ prompt, priority = false }: PromptCardProps) => {
 
   // Fetch like and comment counts
   const { data: likeCount = 0 } = useQuery({
-    queryKey: ["likes", prompt.id],
+    queryKey: ["likes-count", prompt.id],
     queryFn: async () => {
       const { count } = await supabase
         .from("likes")
@@ -163,7 +163,7 @@ const PromptCard = ({ prompt, priority = false }: PromptCardProps) => {
       queryClient.invalidateQueries({
         queryKey: ["like", prompt.id, user?.id],
       });
-      queryClient.invalidateQueries({ queryKey: ["likes", prompt.id] });
+      queryClient.invalidateQueries({ queryKey: ["likes-count", prompt.id] });
       toast.success(isLiked ? "Removed like" : "Liked!");
     },
     onError: (error) => {
