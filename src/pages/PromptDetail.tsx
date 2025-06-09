@@ -22,26 +22,22 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import AuthPrompt from "@/components/AuthPrompt";
 import { extractPlaceholders, formatPlaceholders } from "@/utils/promptUtils";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/contexts/AuthContext";
 
 const PromptDetail = () => {
   const { id } = useParams<{ id: string }>();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [relatedPrompts, setRelatedPrompts] = useState<Prompt[]>([]);
   const [copied, setCopied] = useState(false);
   const [placeholders, setPlaceholders] = useState<string[]>([]);
-
-  // Mock authentication state - in a real app, this would come from your auth provider
-  const isLoggedIn = false;
-
-  // State for social features
-  const [isLiked, setIsLiked] = useState(false);
-  const [isFavorite, setIsFavorite] = useState(false);
-  const [likeCount, setLikeCount] = useState(0);
-  const [commentCount, setCommentCount] = useState(0);
   const [showComments, setShowComments] = useState(false);
   const [newComment, setNewComment] = useState("");
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
   const [authAction, setAuthAction] = useState<string>("");
+
+  const isLoggedIn = !!user;
 
   // Fetch prompt data from Supabase
   const {
@@ -79,12 +75,65 @@ const PromptDetail = () => {
           | "dall-e"
           | "other",
         category: data.category,
-        tags: data.tags,
+        tags: data.tags || [],
         authorName: data.author_name,
         createdAt: data.created_at,
-        likes: 0, // Default value since we don't have this in DB yet
+        likes: 0,
       } as Prompt;
     },
+  });
+
+  // Fetch like count and user's like status
+  const { data: likesData } = useQuery({
+    queryKey: ["likes", id],
+    queryFn: async () => {
+      if (!id) return { count: 0, userHasLiked: false };
+      
+      const [countResult, userLikeResult] = await Promise.all([
+        supabase.from("likes").select("*", { count: "exact", head: true }).eq("prompt_id", id),
+        user ? supabase.from("likes").select("id").eq("prompt_id", id).eq("user_id", user.id).single() : Promise.resolve({ data: null, error: null })
+      ]);
+
+      return {
+        count: countResult.count || 0,
+        userHasLiked: !userLikeResult.error && !!userLikeResult.data
+      };
+    },
+    enabled: !!id,
+  });
+
+  // Fetch comment count
+  const { data: commentsData } = useQuery({
+    queryKey: ["comments-count", id],
+    queryFn: async () => {
+      if (!id) return { count: 0 };
+      
+      const { count } = await supabase
+        .from("comments")
+        .select("*", { count: "exact", head: true })
+        .eq("prompt_id", id);
+
+      return { count: count || 0 };
+    },
+    enabled: !!id,
+  });
+
+  // Fetch user's favorite status
+  const { data: favoriteData } = useQuery({
+    queryKey: ["favorite", id, user?.id],
+    queryFn: async () => {
+      if (!id || !user) return { isFavorite: false };
+      
+      const { data, error } = await supabase
+        .from("favorites")
+        .select("id")
+        .eq("prompt_id", id)
+        .eq("user_id", user.id)
+        .single();
+
+      return { isFavorite: !error && !!data };
+    },
+    enabled: !!id && !!user,
   });
 
   useEffect(() => {
@@ -92,10 +141,6 @@ const PromptDetail = () => {
       // Extract placeholders from the prompt content
       const extractedPlaceholders = extractPlaceholders(prompt.content);
       setPlaceholders(extractedPlaceholders);
-
-      // Set mock counts
-      setLikeCount(Math.floor(Math.random() * 100));
-      setCommentCount(Math.floor(Math.random() * 20));
 
       // Load related prompts
       fetchRelatedPrompts(prompt.category);
@@ -120,7 +165,7 @@ const PromptDetail = () => {
     }
 
     // Transform the data to match our Prompt interface
-    const relatedPromptsData = data.map((item) => ({
+    const relatedPromptsData = (data || []).map((item) => ({
       id: item.id,
       title: item.title,
       description: item.description,
@@ -132,7 +177,7 @@ const PromptDetail = () => {
         | "dall-e"
         | "other",
       category: item.category,
-      tags: item.tags,
+      tags: item.tags || [],
       authorName: item.author_name,
       createdAt: item.created_at,
       likes: 0,
@@ -168,18 +213,106 @@ const PromptDetail = () => {
     }
   };
 
+  // Like mutation
+  const likeMutation = useMutation({
+    mutationFn: async () => {
+      if (!user || !id) throw new Error("User not authenticated");
+      
+      const { data: existingLike } = await supabase
+        .from("likes")
+        .select("id")
+        .eq("prompt_id", id)
+        .eq("user_id", user.id)
+        .single();
+
+      if (existingLike) {
+        // Unlike
+        await supabase.from("likes").delete().eq("id", existingLike.id);
+        return { action: "unlike" };
+      } else {
+        // Like
+        await supabase.from("likes").insert({
+          prompt_id: id,
+          user_id: user.id,
+        });
+        return { action: "like" };
+      }
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["likes", id] });
+      toast.success(data.action === "like" ? "Added to liked prompts!" : "Removed from liked prompts!");
+    },
+    onError: (error) => {
+      console.error("Error toggling like:", error);
+      toast.error("Failed to update like status");
+    },
+  });
+
+  // Favorite mutation
+  const favoriteMutation = useMutation({
+    mutationFn: async () => {
+      if (!user || !id) throw new Error("User not authenticated");
+      
+      const { data: existingFavorite } = await supabase
+        .from("favorites")
+        .select("id")
+        .eq("prompt_id", id)
+        .eq("user_id", user.id)
+        .single();
+
+      if (existingFavorite) {
+        // Remove from favorites
+        await supabase.from("favorites").delete().eq("id", existingFavorite.id);
+        return { action: "unfavorite" };
+      } else {
+        // Add to favorites
+        await supabase.from("favorites").insert({
+          prompt_id: id,
+          user_id: user.id,
+        });
+        return { action: "favorite" };
+      }
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["favorite", id, user?.id] });
+      toast.success(data.action === "favorite" ? "Added to favorites!" : "Removed from favorites!");
+    },
+    onError: (error) => {
+      console.error("Error toggling favorite:", error);
+      toast.error("Failed to update favorite status");
+    },
+  });
+
+  // Comment mutation
+  const commentMutation = useMutation({
+    mutationFn: async (content: string) => {
+      if (!user || !id) throw new Error("User not authenticated");
+      
+      await supabase.from("comments").insert({
+        prompt_id: id,
+        user_id: user.id,
+        content: content.trim(),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["comments", id] });
+      queryClient.invalidateQueries({ queryKey: ["comments-count", id] });
+      toast.success("Comment added!");
+      setNewComment("");
+    },
+    onError: (error) => {
+      console.error("Error adding comment:", error);
+      toast.error("Failed to add comment");
+    },
+  });
+
   const handleLike = () => {
     if (!isLoggedIn) {
       setAuthAction("like prompts");
       setShowAuthPrompt(true);
       return;
     }
-
-    setIsLiked(!isLiked);
-    setLikeCount(isLiked ? likeCount - 1 : likeCount + 1);
-    if (!isLiked) {
-      toast.success("Added to liked prompts!");
-    }
+    likeMutation.mutate();
   };
 
   const handleFavorite = () => {
@@ -188,13 +321,7 @@ const PromptDetail = () => {
       setShowAuthPrompt(true);
       return;
     }
-
-    setIsFavorite(!isFavorite);
-    if (!isFavorite) {
-      toast.success("Added to favorites!");
-    } else {
-      toast.success("Removed from favorites!");
-    }
+    favoriteMutation.mutate();
   };
 
   const handleCommentSubmit = () => {
@@ -205,9 +332,7 @@ const PromptDetail = () => {
     }
 
     if (newComment.trim()) {
-      setCommentCount(commentCount + 1);
-      toast.success("Comment added!");
-      setNewComment("");
+      commentMutation.mutate(newComment);
     }
   };
 
@@ -304,14 +429,15 @@ const PromptDetail = () => {
                 <div className="flex items-center gap-4 mt-4">
                   <button
                     onClick={handleLike}
+                    disabled={likeMutation.isPending}
                     className={`flex items-center gap-1 text-sm ${
-                      isLiked ? "text-red-500" : "text-muted-foreground"
-                    } hover:text-red-500 transition-colors`}
+                      likesData?.userHasLiked ? "text-red-500" : "text-muted-foreground"
+                    } hover:text-red-500 transition-colors disabled:opacity-50`}
                   >
                     <Heart
-                      className={`h-4 w-4 ${isLiked ? "fill-current" : ""}`}
+                      className={`h-4 w-4 ${likesData?.userHasLiked ? "fill-current" : ""}`}
                     />
-                    <span>{likeCount}</span>
+                    <span>{likesData?.count || 0}</span>
                   </button>
 
                   <button
@@ -328,16 +454,17 @@ const PromptDetail = () => {
                     className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors"
                   >
                     <MessageSquare className="h-4 w-4" />
-                    <span>{commentCount}</span>
+                    <span>{commentsData?.count || 0}</span>
                   </button>
 
                   <button
                     onClick={handleFavorite}
+                    disabled={favoriteMutation.isPending}
                     className={`flex items-center gap-1 text-sm ${
-                      isFavorite ? "text-yellow-500" : "text-muted-foreground"
-                    } hover:text-yellow-500 transition-colors`}
+                      favoriteData?.isFavorite ? "text-yellow-500" : "text-muted-foreground"
+                    } hover:text-yellow-500 transition-colors disabled:opacity-50`}
                   >
-                    {isFavorite ? (
+                    {favoriteData?.isFavorite ? (
                       <Bookmark className="h-4 w-4 fill-current" />
                     ) : (
                       <BookmarkPlus className="h-4 w-4" />
@@ -483,9 +610,9 @@ const PromptDetail = () => {
                     <div className="flex justify-end">
                       <Button
                         onClick={handleCommentSubmit}
-                        disabled={!newComment.trim() || !isLoggedIn}
+                        disabled={!newComment.trim() || !isLoggedIn || commentMutation.isPending}
                       >
-                        Comment
+                        {commentMutation.isPending ? "Adding..." : "Comment"}
                       </Button>
                     </div>
                   </div>
