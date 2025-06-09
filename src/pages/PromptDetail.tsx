@@ -75,7 +75,7 @@ const PromptDetail = () => {
           | "dall-e"
           | "other",
         category: data.category,
-        tags: data.tags || [],
+        tags: Array.isArray(data.tags) ? data.tags : [],
         authorName: data.author_name,
         createdAt: data.created_at,
         likes: 0,
@@ -165,7 +165,7 @@ const PromptDetail = () => {
     }
 
     // Transform the data to match our Prompt interface
-    const relatedPromptsData = (data || []).map((item) => ({
+    const relatedPromptsData = Array.isArray(data) ? data.map((item) => ({
       id: item.id,
       title: item.title,
       description: item.description,
@@ -177,11 +177,11 @@ const PromptDetail = () => {
         | "dall-e"
         | "other",
       category: item.category,
-      tags: item.tags || [],
+      tags: Array.isArray(item.tags) ? item.tags : [],
       authorName: item.author_name,
       createdAt: item.created_at,
       likes: 0,
-    })) as Prompt[];
+    })) : [] as Prompt[];
 
     setRelatedPrompts(relatedPromptsData);
   };
@@ -674,7 +674,7 @@ const PromptDetail = () => {
                   </div>
                 </div> */}
 
-                {relatedPrompts.length > 0 && (
+                {Array.isArray(relatedPrompts) && relatedPrompts.length > 0 && (
                   <div>
                     <h3 className="font-semibold mb-4">Related Prompts</h3>
                     <div className="space-y-3">
