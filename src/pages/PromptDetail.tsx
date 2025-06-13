@@ -84,47 +84,52 @@ const PromptDetail = () => {
     },
   });
 
-  // Fetch like count and user's like status
-  const { data: likesData } = useQuery({
-    queryKey: ["likes", id],
+  // Fetch like count
+  const { data: likeCount = 0 } = useQuery({
+    queryKey: ["likes-count", id],
     queryFn: async () => {
-      if (!id) return { count: 0, userHasLiked: false };
+      if (!id) return 0;
 
-      const [countResult, userLikeResult] = await Promise.all([
-        supabase
-          .from("likes")
-          .select("*", { count: "exact", head: true })
-          .eq("prompt_id", id),
-        user
-          ? supabase
-              .from("likes")
-              .select("id")
-              .eq("prompt_id", id)
-              .eq("user_id", user.id)
-              .single()
-          : Promise.resolve({ data: null, error: null }),
-      ]);
+      const { count } = await supabase
+        .from("likes")
+        .select("*", { count: "exact", head: true })
+        .eq("prompt_id", id);
 
-      return {
-        count: countResult.count || 0,
-        userHasLiked: !userLikeResult.error && !!userLikeResult.data,
-      };
+      return count || 0;
     },
     enabled: !!id,
   });
 
-  // Fetch comment count
-  const { data: commentsData } = useQuery({
-    queryKey: ["comments-count", id],
+  // Check if user has liked this prompt
+  const { data: isLiked = false } = useQuery({
+    queryKey: ["like", id, user?.id],
     queryFn: async () => {
-      if (!id) return { count: 0 };
+      if (!user || !id) return false;
+
+      const { data } = await supabase
+        .from("likes")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("prompt_id", id)
+        .single();
+
+      return !!data;
+    },
+    enabled: !!user && !!id,
+  });
+
+  // Fetch comment count
+  const { data: commentCount = 0 } = useQuery({
+    queryKey: ["comments", id],
+    queryFn: async () => {
+      if (!id) return 0;
 
       const { count } = await supabase
         .from("comments")
         .select("*", { count: "exact", head: true })
         .eq("prompt_id", id);
 
-      return { count: count || 0 };
+      return count || 0;
     },
     enabled: !!id,
   });
@@ -252,7 +257,8 @@ const PromptDetail = () => {
       }
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["likes", id] });
+      queryClient.invalidateQueries({ queryKey: ["likes-count", id] });
+      queryClient.invalidateQueries({ queryKey: ["like", id, user?.id] });
       toast.success(
         data.action === "like"
           ? "Added to liked prompts!"
@@ -292,6 +298,7 @@ const PromptDetail = () => {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["favorite", id, user?.id] });
+      queryClient.invalidateQueries({ queryKey: ["favorites"] });
       toast.success(
         data.action === "favorite" ? "Prompt saved!" : "Removed from saved!"
       );
@@ -315,7 +322,6 @@ const PromptDetail = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["comments", id] });
-      queryClient.invalidateQueries({ queryKey: ["comments-count", id] });
       toast.success("Comment added!");
       setNewComment("");
     },
@@ -449,18 +455,14 @@ const PromptDetail = () => {
                   <button
                     onClick={handleLike}
                     disabled={likeMutation.isPending}
-                    className={`flex items-center gap-1 text-sm ${
-                      likesData?.userHasLiked
-                        ? "text-red-500"
-                        : "text-muted-foreground"
-                    } hover:text-red-500 transition-colors disabled:opacity-50`}
+                     className={`flex items-center gap-1 text-sm ${
+                       isLiked ? "text-red-500" : "text-muted-foreground"
+                     } hover:text-red-500 transition-colors disabled:opacity-50`}
                   >
-                    <Heart
-                      className={`h-4 w-4 ${
-                        likesData?.userHasLiked ? "fill-current" : ""
-                      }`}
-                    />
-                    <span>{likesData?.count || 0}</span>
+                     <Heart
+                       className={`h-4 w-4 ${isLiked ? "fill-current" : ""}`}
+                     />
+                     <span>{likeCount}</span>
                   </button>
 
                   <button
@@ -480,22 +482,21 @@ const PromptDetail = () => {
                     }}
                     className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors"
                   >
-                    <MessageSquare className="h-4 w-4" />
-                    <span>{commentsData?.count || 0}</span>
+                     <MessageSquare className="h-4 w-4" />
+                     <span>{commentCount}</span>
                   </button>
 
-                  {/* TODO: Change wording + icon to Save/Saved */}
                   <button
                     onClick={handleFavorite}
                     disabled={favoriteMutation.isPending}
                     className={`flex items-center gap-1 text-sm ${
                       favoriteData?.isFavorite
-                        ? "text-yellow-500"
+                        ? "text-primary"
                         : "text-muted-foreground"
-                    } hover:text-yellow-500 transition-colors disabled:opacity-50`}
+                    } hover:text-primary transition-colors disabled:opacity-50`}
                   >
                     {favoriteData?.isFavorite ? (
-                      <BookmarkCheck className="h-4 w-4 fill-current" />
+                      <BookmarkCheck className="h-4 w-4" />
                     ) : (
                       <Bookmark className="h-4 w-4" />
                     )}
