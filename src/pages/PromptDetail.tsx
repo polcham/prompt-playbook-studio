@@ -111,7 +111,7 @@ const PromptDetail = () => {
         .select("*")
         .eq("user_id", user.id)
         .eq("prompt_id", id)
-        .single();
+        .maybeSingle();
 
       return !!data;
     },
@@ -140,14 +140,14 @@ const PromptDetail = () => {
     queryFn: async () => {
       if (!id || !user) return { isFavorite: false };
 
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("favorites")
         .select("id")
         .eq("prompt_id", id)
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
 
-      return { isFavorite: !error && !!data };
+      return { isFavorite: !!data };
     },
     enabled: !!id && !!user,
   });
@@ -241,7 +241,7 @@ const PromptDetail = () => {
         .select("id")
         .eq("prompt_id", id)
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
 
       if (existingLike) {
         // Unlike
@@ -281,7 +281,7 @@ const PromptDetail = () => {
         .select("id")
         .eq("prompt_id", id)
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
 
       if (existingFavorite) {
         // Remove from favorites

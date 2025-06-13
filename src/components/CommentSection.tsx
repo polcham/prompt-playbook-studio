@@ -22,6 +22,7 @@ const CommentSection = ({ promptId }: CommentSectionProps) => {
   // Fetch comments with user profiles from Supabase
   const { data: comments = [], isLoading: loading } = useQuery({
     queryKey: ["comments", promptId],
+    enabled: !!promptId,
     queryFn: async () => {
       // First get comments
       const { data: commentsData, error: commentsError } = await supabase
