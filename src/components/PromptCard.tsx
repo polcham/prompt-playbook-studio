@@ -100,11 +100,11 @@ const PromptCard = ({ prompt, priority = false }: PromptCardProps) => {
         queryKey: ["favorite", prompt.id, user?.id],
       });
       queryClient.invalidateQueries({ queryKey: ["favorites"] });
-      toast.success("Added to favorites!");
+      toast.success("Prompt saved!");
     },
     onError: (error) => {
-      toast.error("Failed to add to favorites");
-      console.error("Favorite error:", error);
+      toast.error("Failed to save prompt");
+      console.error("Saving prompt error:", error);
     },
   });
 
@@ -124,10 +124,10 @@ const PromptCard = ({ prompt, priority = false }: PromptCardProps) => {
         queryKey: ["favorite", prompt.id, user?.id],
       });
       queryClient.invalidateQueries({ queryKey: ["favorites"] });
-      toast.success("Removed from favorites");
+      toast.success("Removed from saved");
     },
     onError: (error) => {
-      toast.error("Failed to remove from favorites");
+      toast.error("Failed to remove from saved");
       console.error("Unfavorite error:", error);
     },
   });
@@ -190,7 +190,7 @@ const PromptCard = ({ prompt, priority = false }: PromptCardProps) => {
     e.stopPropagation();
 
     if (!isLoggedIn) {
-      setAuthAction("add prompts to favorites");
+      setAuthAction("save prompts");
       setShowAuthPrompt(true);
       return;
     }
@@ -337,7 +337,7 @@ const PromptCard = ({ prompt, priority = false }: PromptCardProps) => {
                 isFavorite ? "text-primary" : "hover:text-primary"
               )}
               aria-label={
-                isFavorite ? "Remove from favorites" : "Save to favorites"
+                isFavorite ? "Remove from saved" : "Save to favorites"
               }
             >
               {isFavorite ? (

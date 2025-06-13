@@ -15,6 +15,7 @@ import {
   BookmarkPlus,
   LogIn,
   FileText,
+  BookmarkCheck,
 } from "lucide-react";
 import CommentSection from "@/components/CommentSection";
 import { Textarea } from "@/components/ui/textarea";
@@ -88,15 +89,25 @@ const PromptDetail = () => {
     queryKey: ["likes", id],
     queryFn: async () => {
       if (!id) return { count: 0, userHasLiked: false };
-      
+
       const [countResult, userLikeResult] = await Promise.all([
-        supabase.from("likes").select("*", { count: "exact", head: true }).eq("prompt_id", id),
-        user ? supabase.from("likes").select("id").eq("prompt_id", id).eq("user_id", user.id).single() : Promise.resolve({ data: null, error: null })
+        supabase
+          .from("likes")
+          .select("*", { count: "exact", head: true })
+          .eq("prompt_id", id),
+        user
+          ? supabase
+              .from("likes")
+              .select("id")
+              .eq("prompt_id", id)
+              .eq("user_id", user.id)
+              .single()
+          : Promise.resolve({ data: null, error: null }),
       ]);
 
       return {
         count: countResult.count || 0,
-        userHasLiked: !userLikeResult.error && !!userLikeResult.data
+        userHasLiked: !userLikeResult.error && !!userLikeResult.data,
       };
     },
     enabled: !!id,
@@ -107,7 +118,7 @@ const PromptDetail = () => {
     queryKey: ["comments-count", id],
     queryFn: async () => {
       if (!id) return { count: 0 };
-      
+
       const { count } = await supabase
         .from("comments")
         .select("*", { count: "exact", head: true })
@@ -123,7 +134,7 @@ const PromptDetail = () => {
     queryKey: ["favorite", id, user?.id],
     queryFn: async () => {
       if (!id || !user) return { isFavorite: false };
-      
+
       const { data, error } = await supabase
         .from("favorites")
         .select("id")
@@ -165,23 +176,25 @@ const PromptDetail = () => {
     }
 
     // Transform the data to match our Prompt interface
-    const relatedPromptsData = Array.isArray(data) ? data.map((item) => ({
-      id: item.id,
-      title: item.title,
-      description: item.description,
-      content: item.content,
-      tool: item.tool as
-        | "chatgpt"
-        | "midjourney"
-        | "claude"
-        | "dall-e"
-        | "other",
-      category: item.category,
-      tags: Array.isArray(item.tags) ? item.tags : [],
-      authorName: item.author_name,
-      createdAt: item.created_at,
-      likes: 0,
-    })) : [] as Prompt[];
+    const relatedPromptsData = Array.isArray(data)
+      ? data.map((item) => ({
+          id: item.id,
+          title: item.title,
+          description: item.description,
+          content: item.content,
+          tool: item.tool as
+            | "chatgpt"
+            | "midjourney"
+            | "claude"
+            | "dall-e"
+            | "other",
+          category: item.category,
+          tags: Array.isArray(item.tags) ? item.tags : [],
+          authorName: item.author_name,
+          createdAt: item.created_at,
+          likes: 0,
+        }))
+      : ([] as Prompt[]);
 
     setRelatedPrompts(relatedPromptsData);
   };
@@ -217,7 +230,7 @@ const PromptDetail = () => {
   const likeMutation = useMutation({
     mutationFn: async () => {
       if (!user || !id) throw new Error("User not authenticated");
-      
+
       const { data: existingLike } = await supabase
         .from("likes")
         .select("id")
@@ -240,7 +253,11 @@ const PromptDetail = () => {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["likes", id] });
-      toast.success(data.action === "like" ? "Added to liked prompts!" : "Removed from liked prompts!");
+      toast.success(
+        data.action === "like"
+          ? "Added to liked prompts!"
+          : "Removed from liked prompts!"
+      );
     },
     onError: (error) => {
       console.error("Error toggling like:", error);
@@ -252,7 +269,7 @@ const PromptDetail = () => {
   const favoriteMutation = useMutation({
     mutationFn: async () => {
       if (!user || !id) throw new Error("User not authenticated");
-      
+
       const { data: existingFavorite } = await supabase
         .from("favorites")
         .select("id")
@@ -275,7 +292,9 @@ const PromptDetail = () => {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["favorite", id, user?.id] });
-      toast.success(data.action === "favorite" ? "Added to favorites!" : "Removed from favorites!");
+      toast.success(
+        data.action === "favorite" ? "Prompt saved!" : "Removed from saved!"
+      );
     },
     onError: (error) => {
       console.error("Error toggling favorite:", error);
@@ -287,7 +306,7 @@ const PromptDetail = () => {
   const commentMutation = useMutation({
     mutationFn: async (content: string) => {
       if (!user || !id) throw new Error("User not authenticated");
-      
+
       await supabase.from("comments").insert({
         prompt_id: id,
         user_id: user.id,
@@ -317,7 +336,7 @@ const PromptDetail = () => {
 
   const handleFavorite = () => {
     if (!isLoggedIn) {
-      setAuthAction("add prompts to favorites");
+      setAuthAction("save prompts to favorites");
       setShowAuthPrompt(true);
       return;
     }
@@ -431,11 +450,15 @@ const PromptDetail = () => {
                     onClick={handleLike}
                     disabled={likeMutation.isPending}
                     className={`flex items-center gap-1 text-sm ${
-                      likesData?.userHasLiked ? "text-red-500" : "text-muted-foreground"
+                      likesData?.userHasLiked
+                        ? "text-red-500"
+                        : "text-muted-foreground"
                     } hover:text-red-500 transition-colors disabled:opacity-50`}
                   >
                     <Heart
-                      className={`h-4 w-4 ${likesData?.userHasLiked ? "fill-current" : ""}`}
+                      className={`h-4 w-4 ${
+                        likesData?.userHasLiked ? "fill-current" : ""
+                      }`}
                     />
                     <span>{likesData?.count || 0}</span>
                   </button>
@@ -445,9 +468,13 @@ const PromptDetail = () => {
                       setShowComments(!showComments);
                       // Scroll to comments section after a brief delay to ensure it's rendered
                       setTimeout(() => {
-                        const commentsSection = document.getElementById('comments-section');
+                        const commentsSection =
+                          document.getElementById("comments-section");
                         if (commentsSection) {
-                          commentsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                          commentsSection.scrollIntoView({
+                            behavior: "smooth",
+                            block: "start",
+                          });
                         }
                       }, 100);
                     }}
@@ -457,19 +484,22 @@ const PromptDetail = () => {
                     <span>{commentsData?.count || 0}</span>
                   </button>
 
+                  {/* TODO: Change wording + icon to Save/Saved */}
                   <button
                     onClick={handleFavorite}
                     disabled={favoriteMutation.isPending}
                     className={`flex items-center gap-1 text-sm ${
-                      favoriteData?.isFavorite ? "text-yellow-500" : "text-muted-foreground"
+                      favoriteData?.isFavorite
+                        ? "text-yellow-500"
+                        : "text-muted-foreground"
                     } hover:text-yellow-500 transition-colors disabled:opacity-50`}
                   >
                     {favoriteData?.isFavorite ? (
-                      <Bookmark className="h-4 w-4 fill-current" />
+                      <BookmarkCheck className="h-4 w-4 fill-current" />
                     ) : (
-                      <BookmarkPlus className="h-4 w-4" />
+                      <Bookmark className="h-4 w-4" />
                     )}
-                    <span>Favorite</span>
+                    <span>{favoriteData?.isFavorite ? "Saved" : "Save"}</span>
                   </button>
 
                   <button
@@ -610,7 +640,11 @@ const PromptDetail = () => {
                     <div className="flex justify-end">
                       <Button
                         onClick={handleCommentSubmit}
-                        disabled={!newComment.trim() || !isLoggedIn || commentMutation.isPending}
+                        disabled={
+                          !newComment.trim() ||
+                          !isLoggedIn ||
+                          commentMutation.isPending
+                        }
                       >
                         {commentMutation.isPending ? "Adding..." : "Comment"}
                       </Button>
