@@ -66,7 +66,7 @@ const CommentSection = ({ promptId }: CommentSectionProps) => {
 
   return (
     <div className="space-y-6">
-      {Array.isArray(comments) && comments.length > 0 &&
+      {Array.isArray(comments) && comments.length > 0 ? (
         comments.map((comment) => {
           const profile = comment.profiles;
           const displayName =
@@ -98,7 +98,8 @@ const CommentSection = ({ promptId }: CommentSectionProps) => {
               </div>
             </div>
           );
-        })}
+        })
+      ) : null}
     </div>
   );
 };
