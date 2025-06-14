@@ -21,11 +21,9 @@ interface CommentSectionProps {
 const CommentSection = ({ promptId }: CommentSectionProps) => {
   // Fetch comments with user profiles from Supabase
   const { data: comments = [], isLoading: loading } = useQuery({
-    queryKey: ["comments", promptId],
+    queryKey: ["comments-list", promptId],
     enabled: !!promptId,
     queryFn: async () => {
-      console.log("Fetching comments for prompt:", promptId);
-      
       // Get comments only - profiles will be null for now
       const { data, error } = await supabase
         .from("comments")
@@ -37,8 +35,6 @@ const CommentSection = ({ promptId }: CommentSectionProps) => {
         console.error("Error fetching comments:", error);
         return [];
       }
-
-      console.log("Comments fetched:", data);
       
       // Map to include null profiles for now
       return (data || []).map((comment) => ({
@@ -47,12 +43,6 @@ const CommentSection = ({ promptId }: CommentSectionProps) => {
       }));
     },
   });
-
-  console.log("CommentSection render - loading:", loading);
-  console.log("CommentSection render - comments:", comments);
-  console.log("CommentSection render - comments length:", comments?.length);
-  console.log("CommentSection render - comments type:", typeof comments);
-  console.log("CommentSection render - comments isArray:", Array.isArray(comments));
 
   if (loading) {
     return (
@@ -73,7 +63,6 @@ const CommentSection = ({ promptId }: CommentSectionProps) => {
   return (
     <div className="space-y-6">
       {comments.map((comment) => {
-        console.log("Rendering comment:", comment);
         const profile = comment.profiles;
         const displayName =
           profile?.username || `User ${comment.user_id.slice(0, 8)}`;
