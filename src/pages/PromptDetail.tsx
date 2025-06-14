@@ -322,6 +322,7 @@ const PromptDetail = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["comments-list", id] });
+      queryClient.invalidateQueries({ queryKey: ["comments", id] });
       toast.success("Comment added!");
       setNewComment("");
     },
