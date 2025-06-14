@@ -20,52 +20,41 @@ interface CommentSectionProps {
 
 const CommentSection = ({ promptId }: CommentSectionProps) => {
   // Fetch comments with user profiles from Supabase
-  const { data: comments = [], isLoading: loading } = useQuery({
+  const { data: comments = [], isLoading: loading, error } = useQuery({
     queryKey: ["comments", promptId],
     enabled: !!promptId,
     queryFn: async () => {
-      // First get comments
-      const { data: commentsData, error: commentsError } = await supabase
+      console.log("Fetching comments for prompt:", promptId);
+      
+      // Get comments with profile data in a single query using joins
+      const { data, error } = await supabase
         .from("comments")
-        .select("id, content, created_at, user_id")
+        .select(`
+          id,
+          content,
+          created_at,
+          user_id,
+          profiles:user_id (
+            username,
+            avatar_url
+          )
+        `)
         .eq("prompt_id", promptId)
         .order("created_at", { ascending: false });
 
-      if (commentsError) {
-        console.error("Error fetching comments:", commentsError);
-        return [];
+      if (error) {
+        console.error("Error fetching comments:", error);
+        throw error;
       }
 
-      if (!commentsData || commentsData.length === 0) {
-        return [];
-      }
-
-      // Get unique user IDs
-      const userIds = [
-        ...new Set(commentsData.map((comment) => comment.user_id)),
-      ];
-
-      // Fetch profiles for these users
-      const { data: profilesData, error: profilesError } = await supabase
-        .from("profiles")
-        .select("id, username, avatar_url")
-        .in("id", userIds);
-
-      if (profilesError) {
-        console.error("Error fetching profiles:", profilesError);
-      }
-
-      // Combine comments with profiles
-      const profilesMap = new Map(
-        profilesData?.map((profile) => [profile.id, profile]) || []
-      );
-
-      return commentsData.map((comment) => ({
-        ...comment,
-        profiles: profilesMap.get(comment.user_id) || null,
-      }));
+      console.log("Comments fetched:", data);
+      return data || [];
     },
   });
+
+  if (error) {
+    console.error("Comments query error:", error);
+  }
 
   if (loading) {
     return (
