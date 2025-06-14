@@ -20,41 +20,33 @@ interface CommentSectionProps {
 
 const CommentSection = ({ promptId }: CommentSectionProps) => {
   // Fetch comments with user profiles from Supabase
-  const { data: comments = [], isLoading: loading, error } = useQuery({
+  const { data: comments = [], isLoading: loading } = useQuery({
     queryKey: ["comments", promptId],
     enabled: !!promptId,
     queryFn: async () => {
       console.log("Fetching comments for prompt:", promptId);
       
-      // Get comments with profile data in a single query using joins
+      // Get comments only - profiles will be null for now
       const { data, error } = await supabase
         .from("comments")
-        .select(`
-          id,
-          content,
-          created_at,
-          user_id,
-          profiles:user_id (
-            username,
-            avatar_url
-          )
-        `)
+        .select("id, content, created_at, user_id")
         .eq("prompt_id", promptId)
         .order("created_at", { ascending: false });
 
       if (error) {
         console.error("Error fetching comments:", error);
-        throw error;
+        return [];
       }
 
       console.log("Comments fetched:", data);
-      return data || [];
+      
+      // Map to include null profiles for now
+      return (data || []).map((comment) => ({
+        ...comment,
+        profiles: null,
+      }));
     },
   });
-
-  if (error) {
-    console.error("Comments query error:", error);
-  }
 
   if (loading) {
     return (
