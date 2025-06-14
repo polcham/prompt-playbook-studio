@@ -160,7 +160,7 @@ const Index = () => {
         </section>
 
         {/* Trending Section */}
-        <section className="py-16 bg-muted/50 px-4">
+        {/* <section className="py-16 bg-muted/50 px-4">
           <div className="container mx-auto">
             <div className="flex justify-between items-center mb-10">
               <h2 className="text-2xl md:text-3xl font-bold">
@@ -210,7 +210,7 @@ const Index = () => {
                   ))}
             </div>
           </div>
-        </section>
+        </section> */}
 
         {/* Newsletter Section */}
         {/* <section className="py-16 px-4">
