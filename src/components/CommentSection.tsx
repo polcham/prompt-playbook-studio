@@ -48,6 +48,12 @@ const CommentSection = ({ promptId }: CommentSectionProps) => {
     },
   });
 
+  console.log("CommentSection render - loading:", loading);
+  console.log("CommentSection render - comments:", comments);
+  console.log("CommentSection render - comments length:", comments?.length);
+  console.log("CommentSection render - comments type:", typeof comments);
+  console.log("CommentSection render - comments isArray:", Array.isArray(comments));
+
   if (loading) {
     return (
       <div className="py-4 text-center text-muted-foreground">
@@ -56,7 +62,7 @@ const CommentSection = ({ promptId }: CommentSectionProps) => {
     );
   }
 
-  if (comments.length === 0) {
+  if (!Array.isArray(comments) || comments.length === 0) {
     return (
       <div className="py-8 text-center text-muted-foreground">
         No comments yet. Be the first to comment!
@@ -66,40 +72,39 @@ const CommentSection = ({ promptId }: CommentSectionProps) => {
 
   return (
     <div className="space-y-6">
-      {Array.isArray(comments) && comments.length > 0 ? (
-        comments.map((comment) => {
-          const profile = comment.profiles;
-          const displayName =
-            profile?.username || `User ${comment.user_id.slice(0, 8)}`;
-          const avatarUrl = profile?.avatar_url;
+      {comments.map((comment) => {
+        console.log("Rendering comment:", comment);
+        const profile = comment.profiles;
+        const displayName =
+          profile?.username || `User ${comment.user_id.slice(0, 8)}`;
+        const avatarUrl = profile?.avatar_url;
 
-          return (
-            <div key={comment.id} className="border-b pb-4 last:border-0">
-              <div className="flex items-start gap-3">
-                <Avatar className="w-8 h-8">
-                  {avatarUrl && (
-                    <AvatarImage src={avatarUrl} alt={displayName} />
-                  )}
-                  <AvatarFallback className="text-xs">
-                    {displayName.charAt(0).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between mb-1">
-                    <div className="font-medium">{displayName}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {formatDistanceToNow(new Date(comment.created_at), {
-                        addSuffix: true,
-                      })}
-                    </div>
+        return (
+          <div key={comment.id} className="border-b pb-4 last:border-0">
+            <div className="flex items-start gap-3">
+              <Avatar className="w-8 h-8">
+                {avatarUrl && (
+                  <AvatarImage src={avatarUrl} alt={displayName} />
+                )}
+                <AvatarFallback className="text-xs">
+                  {displayName.charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1">
+                <div className="flex items-center justify-between mb-1">
+                  <div className="font-medium">{displayName}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {formatDistanceToNow(new Date(comment.created_at), {
+                      addSuffix: true,
+                    })}
                   </div>
-                  <p className="text-sm">{comment.content}</p>
                 </div>
+                <p className="text-sm">{comment.content}</p>
               </div>
             </div>
-          );
-        })
-      ) : null}
+          </div>
+        );
+      })}
     </div>
   );
 };
